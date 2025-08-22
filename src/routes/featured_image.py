@@ -274,7 +274,7 @@ def featured_admin():
                 <div class="current-featured">
                     <h2 style="color: #ff6b35; margin-bottom: 15px;">Current Featured Image</h2>
                     <div style="display: flex; gap: 20px; align-items: flex-start;">
-                        <img src="/photography-assets/{{ featured_data.image }}" 
+                        <img src="/static/assets/{{ featured_data.image }}" 
                              alt="{{ featured_data.title }}" 
                              style="width: 300px; height: 200px; object-fit: cover; border-radius: 8px;">
                         <div style="flex: 1;">
@@ -351,7 +351,7 @@ def featured_admin():
             <div class="portfolio-grid">
                 {% for image in portfolio_data %}
                     <div class="portfolio-item">
-                        <img src="/photography-assets/{{ image.image }}" alt="{{ image.title }}">
+                        <img src="/static/assets/{{ image.image }}" alt="{{ image.title }}">
                         <div class="portfolio-item-info">
                             <h3>{{ image.title }}</h3>
                             <p>{{ image.description }}</p>

@@ -187,7 +187,7 @@ def background_manager():
         
         <div class="current-bg">
             <h2>Current Background</h2>
-            <img src="/photography-assets/{{ current_bg }}" alt="Current Background">
+            <img src="/static/assets/{{ current_bg }}" alt="Current Background">
             <p><strong>File:</strong> {{ current_bg }}</p>
         </div>
         
@@ -213,7 +213,7 @@ def background_manager():
                     {% if item.image == current_bg %}
                     <div class="current-indicator">CURRENT</div>
                     {% endif %}
-                    <img src="/photography-assets/{{ item.image }}" alt="{{ item.title }}">
+                    <img src="/static/assets/{{ item.image }}" alt="{{ item.title }}">
                     <div class="info">
                         <h4>{{ item.title }}</h4>
                         <div class="categories">{{ item.get('categories', [item.get('category', 'Unknown')]) | join(', ') }}</div>

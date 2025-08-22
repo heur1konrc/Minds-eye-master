@@ -38,7 +38,7 @@ db.init_app(app)
 with app.app_context():
     db.create_all()
 
-@app.route('/photography-assets/<path:filename>')
+@app.route('/static/assets/<path:filename>')
 def serve_photography_assets(filename):
     """Serve images from the separate photography assets directory"""
     try:

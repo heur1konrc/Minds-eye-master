@@ -539,7 +539,7 @@ def portfolio_management():
                     <span style="color: #ccc; font-size: 14px;">Select for bulk operations</span>
                 </div>
                 
-                <img src="/photography-assets/{{ item.image }}" alt="{{ item.title }}">
+                <img src="/static/assets/{{ item.image }}" alt="{{ item.title }}">
                 
                 <div class="image-info">
                     <h3>{{ item.title }}</h3>

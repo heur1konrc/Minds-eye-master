@@ -506,7 +506,7 @@ dashboard_html = '''
         <div class="portfolio-grid">
             {% for item in portfolio_data %}
             <div class="portfolio-item">
-                <img src="/photography-assets/{{ item.image }}" alt="{{ item.title }}">
+                <img src="/static/assets/{{ item.image }}" alt="{{ item.title }}">
                 <div class="portfolio-info">
                     <h3>{{ item.title }}</h3>
                     <p>{{ item.description }}</p>
