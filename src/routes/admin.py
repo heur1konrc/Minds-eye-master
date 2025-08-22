@@ -265,6 +265,55 @@ def admin_upload():
                                     message=f"Upload failed: {str(e)}", 
                                     message_type="error")
 
+@admin_bp.route('/admin/bulk-delete', methods=['POST'])
+def bulk_delete():
+    """Handle bulk deletion of multiple images"""
+    if 'admin_logged_in' not in session:
+        return redirect(url_for('admin.admin_login'))
+    
+    try:
+        # Get list of image IDs to delete
+        image_ids = request.form.getlist('image_ids')
+        
+        if not image_ids:
+            flash('No images selected for deletion.', 'error')
+            return redirect(url_for('admin.admin_dashboard'))
+        
+        # Load current portfolio data
+        portfolio_data = load_portfolio_data()
+        
+        # Track deleted images for cleanup
+        deleted_images = []
+        
+        # Remove selected images from portfolio data
+        updated_portfolio = []
+        for item in portfolio_data:
+            if item.get('id') in image_ids:
+                deleted_images.append(item)
+            else:
+                updated_portfolio.append(item)
+        
+        # Delete image files from filesystem
+        for item in deleted_images:
+            image_path = os.path.join(PHOTOGRAPHY_ASSETS_DIR, item.get('image', ''))
+            if os.path.exists(image_path):
+                try:
+                    os.remove(image_path)
+                    print(f"✅ Deleted image file: {image_path}")
+                except Exception as e:
+                    print(f"⚠️  Could not delete image file {image_path}: {e}")
+        
+        # Save updated portfolio data
+        save_portfolio_data(updated_portfolio)
+        
+        flash(f'Successfully deleted {len(deleted_images)} image(s).', 'success')
+        
+    except Exception as e:
+        print(f"Error in bulk delete: {e}")
+        flash(f'Error deleting images: {str(e)}', 'error')
+    
+    return redirect(url_for('admin.admin_dashboard'))
+
 @admin_bp.route('/admin/delete', methods=['POST'])
 def admin_delete():
     """Delete image"""
@@ -389,6 +438,7 @@ dashboard_html = '''
             background: #222; 
             border-radius: 10px; 
             overflow: hidden; 
+            position: relative;
         }
         .portfolio-item img { 
             width: 100%; 
@@ -400,6 +450,36 @@ dashboard_html = '''
             margin: 0 0 10px 0; 
             color: #ff6b35; 
         }
+        .portfolio-checkbox {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            width: 20px;
+            height: 20px;
+            z-index: 10;
+        }
+        .bulk-controls {
+            background: #333;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .bulk-controls button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .select-all-btn { background: #4CAF50; color: white; }
+        .select-none-btn { background: #757575; color: white; }
+        .bulk-delete-btn { background: #f44336; color: white; }
+        .bulk-delete-btn:disabled { background: #666; cursor: not-allowed; }
+        .selected-count { color: #ff6b35; font-weight: bold; }
         .delete-btn { 
             background: #ff4444; 
             color: #fff; 
@@ -503,9 +583,21 @@ dashboard_html = '''
     
     <div>
         <h2>Current Portfolio ({{ portfolio_data|length }} images)</h2>
+        
+        <!-- Bulk Delete Controls -->
+        <div class="bulk-controls">
+            <button type="button" class="select-all-btn" onclick="selectAll()">Select All</button>
+            <button type="button" class="select-none-btn" onclick="selectNone()">Select None</button>
+            <span class="selected-count">Selected: <span id="selectedCount">0</span></span>
+            <button type="button" class="bulk-delete-btn" id="bulkDeleteBtn" onclick="bulkDelete()" disabled>
+                Delete Selected
+            </button>
+        </div>
+        
         <div class="portfolio-grid">
             {% for item in portfolio_data %}
             <div class="portfolio-item">
+                <input type="checkbox" class="portfolio-checkbox" name="selected_images" value="{{ item.id }}" onchange="updateSelectedCount()">
                 <img src="/static/assets/{{ item.image }}" alt="{{ item.title }}">
                 <div class="portfolio-info">
                     <h3>{{ item.title }}</h3>
@@ -520,6 +612,58 @@ dashboard_html = '''
             {% endfor %}
         </div>
     </div>
+    
+    <script>
+        function selectAll() {
+            const checkboxes = document.querySelectorAll('.portfolio-checkbox');
+            checkboxes.forEach(cb => cb.checked = true);
+            updateSelectedCount();
+        }
+        
+        function selectNone() {
+            const checkboxes = document.querySelectorAll('.portfolio-checkbox');
+            checkboxes.forEach(cb => cb.checked = false);
+            updateSelectedCount();
+        }
+        
+        function updateSelectedCount() {
+            const checkboxes = document.querySelectorAll('.portfolio-checkbox:checked');
+            const count = checkboxes.length;
+            document.getElementById('selectedCount').textContent = count;
+            document.getElementById('bulkDeleteBtn').disabled = count === 0;
+        }
+        
+        function bulkDelete() {
+            const checkboxes = document.querySelectorAll('.portfolio-checkbox:checked');
+            const selectedIds = Array.from(checkboxes).map(cb => cb.value);
+            
+            if (selectedIds.length === 0) {
+                alert('Please select images to delete.');
+                return;
+            }
+            
+            const confirmMessage = `Are you sure you want to delete ${selectedIds.length} selected image(s)? This action cannot be undone.`;
+            if (!confirm(confirmMessage)) {
+                return;
+            }
+            
+            // Create form and submit
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '/admin/bulk-delete';
+            
+            selectedIds.forEach(id => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'image_ids';
+                input.value = id;
+                form.appendChild(input);
+            });
+            
+            document.body.appendChild(form);
+            form.submit();
+        }
+    </script>
 </body>
 </html>
 '''
