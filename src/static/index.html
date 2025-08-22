@@ -1,18 +1,58 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Mind's Eye Photography - Professional Wildlife & Landscape Photography</title>
-    <script type="module" crossorigin src="/assets/index-DErpqh3k.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-Bne1DePj.css">
-    <link rel="stylesheet" href="/assets/enhanced-featured-styles.css">
-    <link rel="stylesheet" href="/assets/global-background-fix.css">
-  </head>
-  <body>
-    <div id="root"></div>
-    <script src="/assets/enhanced-featured-final.js"></script>
-    <script src="/assets/navigation-fix.js"></script>
-  </body>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mind's Eye Photography - Admin System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: white;
+        }
+        .container {
+            text-align: center;
+            background: rgba(0,0,0,0.3);
+            padding: 40px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+        }
+        .admin-link {
+            display: inline-block;
+            background: #ff6b35;
+            color: white;
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 1.2em;
+            margin: 10px;
+            transition: background 0.3s;
+        }
+        .admin-link:hover {
+            background: #e55a2b;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Mind's Eye Photography</h1>
+        <p>Professional Photography Admin System</p>
+        <a href="/admin" class="admin-link">🎯 Admin Dashboard</a>
+        <a href="/admin/background" class="admin-link">🖼️ Background Management</a>
+        <a href="/admin/featured" class="admin-link">⭐ Featured Image</a>
+        <a href="/admin/portfolio" class="admin-link">📸 Portfolio Management</a>
+        <a href="/admin/categories" class="admin-link">📁 Category Management</a>
+    </div>
+</body>
 </html>
+
