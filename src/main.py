@@ -49,7 +49,9 @@ with app.app_context():
     init_system_config()
     # Migrate existing images from volume to database
     migrate_existing_images()
-    print("✅ SQL Database initialized with default data and migrated images")/database-info')
+    print("✅ SQL Database initialized with default data and migrated images")
+
+@app.route('/debug/database-info')
 def debug_database_info():
     """Debug route to check database content"""
     try:
