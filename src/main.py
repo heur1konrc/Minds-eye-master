@@ -42,6 +42,28 @@ db.init_app(app)
 with app.app_context():
     db.create_all()
 
+@app.route('/debug/volume-info')
+def debug_volume_info():
+    """Debug route to check volume path detection"""
+    import os
+    from src.config import PHOTOGRAPHY_ASSETS_DIR
+    
+    info = {
+        'PHOTOGRAPHY_ASSETS_DIR': PHOTOGRAPHY_ASSETS_DIR,
+        'RAILWAY_VOLUME_MOUNT_PATH': os.environ.get('RAILWAY_VOLUME_MOUNT_PATH'),
+        'directory_exists': os.path.exists(PHOTOGRAPHY_ASSETS_DIR),
+        'directory_contents': [],
+        'environment_vars': {k: v for k, v in os.environ.items() if 'RAILWAY' in k or 'VOLUME' in k}
+    }
+    
+    try:
+        if os.path.exists(PHOTOGRAPHY_ASSETS_DIR):
+            info['directory_contents'] = os.listdir(PHOTOGRAPHY_ASSETS_DIR)[:10]  # First 10 files
+    except Exception as e:
+        info['directory_error'] = str(e)
+    
+    return f"<pre>{json.dumps(info, indent=2)}</pre>"
+
 @app.route('/static/assets/<path:filename>')
 def serve_photography_assets(filename):
     """Serve images from the separate photography assets directory"""
@@ -52,7 +74,7 @@ def serve_photography_assets(filename):
         old_assets_dir = os.path.join(app.static_folder, 'assets')
         if os.path.exists(os.path.join(old_assets_dir, filename)):
             return send_from_directory(old_assets_dir, filename)
-        return "Image not found", 404
+        return f"Image not found. Checked: {PHOTOGRAPHY_ASSETS_DIR}/{filename} and {old_assets_dir}/{filename}", 404
 
 @app.route('/api/portfolio')
 def get_portfolio():
