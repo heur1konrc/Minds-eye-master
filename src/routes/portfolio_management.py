@@ -527,6 +527,7 @@ def portfolio_management():
                 </div>
                 {% endfor %}
                 <button onclick="bulkUpdateCategories()" class="bulk-update-btn">Update Selected Images</button>
+                <button onclick="bulkDeleteImages()" class="bulk-delete-btn">Delete Selected</button>
             </div>
         </div>
         

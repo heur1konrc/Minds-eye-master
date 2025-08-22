@@ -301,18 +301,57 @@ def bulk_delete():
                     os.remove(image_path)
                     print(f"✅ Deleted image file: {image_path}")
                 except Exception as e:
-                    print(f"⚠️  Could not delete image file {image_path}: {e}")
+                    print(f"❌ Error deleting image file {image_path}: {e}")
         
         # Save updated portfolio data
         save_portfolio_data(updated_portfolio)
         
-        flash(f'Successfully deleted {len(deleted_images)} image(s).', 'success')
+        flash(f'{len(deleted_images)} image(s) deleted successfully!', 'success')
+        return redirect(url_for('admin.admin_dashboard'))
         
     except Exception as e:
-        print(f"Error in bulk delete: {e}")
+        print(f"Bulk delete error: {e}")
         flash(f'Error deleting images: {str(e)}', 'error')
+        return redirect(url_for('admin.admin_dashboard'))
+
+@admin_bp.route('/admin/bulk-update-categories', methods=['POST'])
+def bulk_update_categories():
+    """Handle bulk category updates for multiple images"""
+    if 'admin_logged_in' not in session:
+        return {'success': False, 'message': 'Not authenticated'}, 401
     
-    return redirect(url_for('admin.admin_dashboard'))
+    try:
+        data = request.get_json()
+        image_ids = data.get('image_ids', [])
+        categories = data.get('categories', [])
+        
+        if not image_ids:
+            return {'success': False, 'message': 'No images selected'}
+        
+        if not categories:
+            return {'success': False, 'message': 'No categories selected'}
+        
+        # Load current portfolio data
+        portfolio_data = load_portfolio_data()
+        
+        # Update categories for selected images
+        updated_count = 0
+        for item in portfolio_data:
+            if item.get('id') in image_ids:
+                item['categories'] = categories
+                updated_count += 1
+        
+        # Save updated portfolio data
+        save_portfolio_data(portfolio_data)
+        
+        return {
+            'success': True, 
+            'message': f'Updated {updated_count} image(s) with categories: {", ".join(categories)}'
+        }
+        
+    except Exception as e:
+        print(f"Bulk category update error: {e}")
+        return {'success': False, 'message': str(e)}, 500
 
 @admin_bp.route('/admin/delete', methods=['POST'])
 def admin_delete():
@@ -460,26 +499,73 @@ dashboard_html = '''
         }
         .bulk-controls {
             background: #333;
-            padding: 15px;
+            padding: 20px;
             border-radius: 10px;
             margin: 20px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .bulk-selection {
             display: flex;
             gap: 15px;
             align-items: center;
             flex-wrap: wrap;
         }
+        .bulk-category-section {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .bulk-category-checkboxes {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .bulk-category-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #fff;
+            cursor: pointer;
+            padding: 8px 12px;
+            background: #444;
+            border-radius: 4px;
+            border: 1px solid #555;
+        }
+        .bulk-category-label:hover {
+            background: #555;
+        }
+        .bulk-category-label input[type="checkbox"] {
+            width: auto;
+            margin: 0;
+        }
+        .bulk-actions {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
         .bulk-controls button {
-            padding: 8px 16px;
+            padding: 10px 20px;
             border: none;
             border-radius: 5px;
             cursor: pointer;
             font-size: 14px;
+            font-weight: bold;
         }
         .select-all-btn { background: #4CAF50; color: white; }
         .select-none-btn { background: #757575; color: white; }
+        .bulk-update-btn { background: #ff6b35; color: white; }
         .bulk-delete-btn { background: #f44336; color: white; }
-        .bulk-delete-btn:disabled { background: #666; cursor: not-allowed; }
-        .selected-count { color: #ff6b35; font-weight: bold; }
+        .bulk-update-btn:disabled, .bulk-delete-btn:disabled { 
+            background: #666; 
+            cursor: not-allowed; 
+        }
+        .selected-count { 
+            color: #ff6b35; 
+            font-weight: bold; 
+            font-size: 16px;
+        }
         .delete-btn { 
             background: #ff4444; 
             color: #fff; 
@@ -584,14 +670,34 @@ dashboard_html = '''
     <div>
         <h2>Current Portfolio ({{ portfolio_data|length }} images)</h2>
         
-        <!-- Bulk Delete Controls -->
+        <!-- Unified Bulk Operations -->
         <div class="bulk-controls">
-            <button type="button" class="select-all-btn" onclick="selectAll()">Select All</button>
-            <button type="button" class="select-none-btn" onclick="selectNone()">Select None</button>
-            <span class="selected-count">Selected: <span id="selectedCount">0</span></span>
-            <button type="button" class="bulk-delete-btn" id="bulkDeleteBtn" onclick="bulkDelete()" disabled>
-                Delete Selected
-            </button>
+            <div class="bulk-selection">
+                <button type="button" class="select-all-btn" onclick="selectAll()">Select All</button>
+                <button type="button" class="select-none-btn" onclick="selectNone()">Select None</button>
+                <span class="selected-count">Selected: <span id="selectedCount">0</span></span>
+            </div>
+            
+            <div class="bulk-category-section">
+                <span style="color: #ccc; font-size: 14px;">Set categories for selected images:</span>
+                <div class="bulk-category-checkboxes">
+                    {% for category in available_categories %}
+                    <label class="bulk-category-label">
+                        <input type="checkbox" name="bulk_categories" value="{{ category }}" id="bulk_{{ category }}">
+                        {{ category }}
+                    </label>
+                    {% endfor %}
+                </div>
+                <button type="button" class="bulk-update-btn" id="bulkUpdateBtn" onclick="bulkUpdateCategories()" disabled>
+                    Update Categories
+                </button>
+            </div>
+            
+            <div class="bulk-actions">
+                <button type="button" class="bulk-delete-btn" id="bulkDeleteBtn" onclick="bulkDelete()" disabled>
+                    Delete Selected
+                </button>
+            </div>
         </div>
         
         <div class="portfolio-grid">
@@ -631,6 +737,49 @@ dashboard_html = '''
             const count = checkboxes.length;
             document.getElementById('selectedCount').textContent = count;
             document.getElementById('bulkDeleteBtn').disabled = count === 0;
+            document.getElementById('bulkUpdateBtn').disabled = count === 0;
+        }
+        
+        function bulkUpdateCategories() {
+            const selectedImages = Array.from(document.querySelectorAll('.portfolio-checkbox:checked')).map(cb => cb.value);
+            const selectedCategories = Array.from(document.querySelectorAll('input[name="bulk_categories"]:checked')).map(cb => cb.value);
+            
+            if (selectedImages.length === 0) {
+                alert('Please select at least one image');
+                return;
+            }
+            
+            if (selectedCategories.length === 0) {
+                alert('Please select at least one category');
+                return;
+            }
+            
+            const confirmMessage = `Update ${selectedImages.length} image(s) with categories: ${selectedCategories.join(', ')}?`;
+            if (!confirm(confirmMessage)) {
+                return;
+            }
+            
+            fetch('/admin/bulk-update-categories', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    image_ids: selectedImages,
+                    categories: selectedCategories
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Error updating categories: ' + data.message);
+                }
+            })
+            .catch(error => {
+                alert('Error updating categories: ' + error);
+            });
         }
         
         function bulkDelete() {
