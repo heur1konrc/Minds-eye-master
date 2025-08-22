@@ -618,7 +618,6 @@ dashboard_html = '''
     <div class="admin-links">
         <a href="/admin/background">🖼️ Background Management</a>
         <a href="/admin/featured">⭐ Featured Image</a>
-        <a href="/admin/portfolio-management">📁 Portfolio Management</a>
         <a href="/admin/category-management">🏷️ Category Management</a>
     </div>
     
@@ -629,7 +628,7 @@ dashboard_html = '''
     {% endif %}
     
     <div class="form-container">
-        <h2>Upload New Images</h2>
+        <h2>Manage Your Portfolio</h2>
         <form method="POST" action="/admin/upload" enctype="multipart/form-data">
             <div class="form-group">
                 <label for="image">Image Files (JPG/PNG) - Select Multiple</label>

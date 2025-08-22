@@ -17,10 +17,10 @@ def get_current_background():
         if os.path.exists(BACKGROUND_CONFIG_FILE):
             with open(BACKGROUND_CONFIG_FILE, 'r') as f:
                 config = json.load(f)
-                return config.get('background_image', 'madison-skyline-landscape.jpg')
+                return config.get('current_background', config.get('background_image', 'sunset-hero-B4Va6Mpo.jpg'))
     except:
         pass
-    return 'madison-skyline-landscape.jpg'
+    return 'sunset-hero-B4Va6Mpo.jpg'
 
 def set_background_image(filename):
     """Set the current background image"""
