@@ -9,7 +9,7 @@ import json
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from flask import Flask, send_from_directory, request, jsonify
-from src.models.user import db
+from src.models import db, Image, Category, ImageCategory, SystemConfig, init_default_categories, init_system_config, migrate_existing_images
 from src.routes.user import user_bp
 from src.routes.contact import contact_bp
 from src.routes.admin import admin_bp
@@ -35,14 +35,21 @@ app.register_blueprint(featured_bp)
 app.register_blueprint(portfolio_mgmt_bp)
 app.register_blueprint(category_mgmt_bp)
 
-# uncomment if you need to use database
-app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(os.path.dirname(__file__), 'database', 'app.db')}"
+# Database configuration - Use persistent volume for database
+database_path = os.path.join(PHOTOGRAPHY_ASSETS_DIR, 'mindseye.db')
+app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{database_path}"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# Initialize database
 db.init_app(app)
 with app.app_context():
     db.create_all()
-
-@app.route('/debug/database-info')
+    # Initialize default categories and system config
+    init_default_categories()
+    init_system_config()
+    # Migrate existing images from volume to database
+    migrate_existing_images()
+    print("✅ SQL Database initialized with default data and migrated images")/database-info')
 def debug_database_info():
     """Debug route to check database content"""
     try:
