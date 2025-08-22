@@ -42,6 +42,23 @@ db.init_app(app)
 with app.app_context():
     db.create_all()
 
+@app.route('/debug/database-info')
+def debug_database_info():
+    """Debug route to check database content"""
+    try:
+        from src.routes.admin import load_portfolio_data
+        portfolio_data = load_portfolio_data()
+        
+        info = {
+            'portfolio_count': len(portfolio_data),
+            'portfolio_items': portfolio_data[:5],  # First 5 items
+            'sample_image_paths': [item.get('image', 'NO_IMAGE') for item in portfolio_data[:10]]
+        }
+        
+        return f"<pre>{json.dumps(info, indent=2)}</pre>"
+    except Exception as e:
+        return f"<pre>Database error: {str(e)}</pre>"
+
 @app.route('/debug/volume-info')
 def debug_volume_info():
     """Debug route to check volume path detection"""
