@@ -1,3 +1,7 @@
+"""
+Mind's Eye Photography - Main Flask Application
+PERSISTENCE TEST: Testing if images survive deployment with /data volume
+"""
 import os
 import sys
 import json
