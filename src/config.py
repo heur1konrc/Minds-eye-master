@@ -9,9 +9,9 @@ BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 STATIC_DIR = os.path.join(BASE_DIR, 'src', 'static')
 
 # Separate photography assets directory (persistent volume for Railway)
-# Use Railway's persistent volume at /mnt/data, fallback to local for development
-if os.path.exists('/mnt/data'):
-    PHOTOGRAPHY_ASSETS_DIR = '/mnt/data'
+# Use Railway's persistent volume at /data, fallback to local for development
+if os.path.exists('/data'):
+    PHOTOGRAPHY_ASSETS_DIR = '/data'
 else:
     # Local development fallback
     PHOTOGRAPHY_ASSETS_DIR = os.path.join(BASE_DIR, '..', 'photography-assets')
