@@ -9,12 +9,21 @@ BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 STATIC_DIR = os.path.join(BASE_DIR, 'src', 'static')
 
 # Separate photography assets directory (persistent volume for Railway)
-# Use Railway's persistent volume at /data, fallback to local for development
-if os.path.exists('/data'):
+# Use Railway's volume mount path from environment variable, with fallbacks
+RAILWAY_VOLUME_PATH = os.environ.get('RAILWAY_VOLUME_MOUNT_PATH')
+if RAILWAY_VOLUME_PATH and os.path.exists(RAILWAY_VOLUME_PATH):
+    PHOTOGRAPHY_ASSETS_DIR = RAILWAY_VOLUME_PATH
+elif os.path.exists('/data'):
     PHOTOGRAPHY_ASSETS_DIR = '/data'
+elif os.path.exists('/mnt/data'):
+    PHOTOGRAPHY_ASSETS_DIR = '/mnt/data'
 else:
     # Local development fallback
     PHOTOGRAPHY_ASSETS_DIR = os.path.join(BASE_DIR, '..', 'photography-assets')
+
+print(f"🔍 PHOTOGRAPHY_ASSETS_DIR set to: {PHOTOGRAPHY_ASSETS_DIR}")
+print(f"🔍 RAILWAY_VOLUME_MOUNT_PATH: {RAILWAY_VOLUME_PATH}")
+print(f"🔍 Directory exists: {os.path.exists(PHOTOGRAPHY_ASSETS_DIR)}")
 
 # Data files (keep with website for easy admin updates)
 PORTFOLIO_DATA_FILE = os.path.join(STATIC_DIR, 'assets', 'portfolio-data-multicategory.json')
