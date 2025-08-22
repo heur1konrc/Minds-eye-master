@@ -165,6 +165,20 @@ class User(db.Model):
 
 def init_default_categories():
     """Initialize default categories if they don't exist"""
+    # First, check if we need to migrate the database schema
+    try:
+        # Try to query with new schema
+        existing_test = Category.query.first()
+    except Exception as e:
+        if "no such column" in str(e):
+            print("🔄 Detected old database schema - performing migration...")
+            # Drop and recreate tables for clean migration
+            db.drop_all()
+            db.create_all()
+            print("✅ Database schema migrated successfully")
+        else:
+            raise e
+    
     default_categories = [
         {'name': 'Wildlife', 'display_name': 'Wildlife', 'color': '#ff6b35', 'display_order': 1},
         {'name': 'Landscapes', 'display_name': 'Landscapes', 'color': '#4CAF50', 'display_order': 2},
