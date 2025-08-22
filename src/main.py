@@ -14,11 +14,11 @@ from src.routes.featured_image import featured_bp
 from src.routes.portfolio_management import portfolio_mgmt_bp
 from src.routes.category_management import category_mgmt_bp
 
+# Import configuration
+from src.config import PHOTOGRAPHY_ASSETS_DIR
+
 app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), 'static'))
 app.config['SECRET_KEY'] = 'asdf#FGSgvasgf$5$WGT'
-
-# Configure separate photography assets directory
-PHOTOGRAPHY_ASSETS_DIR = os.path.join(os.path.dirname(__file__), '..', '..', 'photography-assets')
 
 # Ensure photography assets directory exists
 os.makedirs(PHOTOGRAPHY_ASSETS_DIR, exist_ok=True)

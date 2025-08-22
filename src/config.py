@@ -8,8 +8,13 @@ import os
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 STATIC_DIR = os.path.join(BASE_DIR, 'src', 'static')
 
-# Separate photography assets directory (outside website structure)
-PHOTOGRAPHY_ASSETS_DIR = os.path.join(BASE_DIR, '..', 'photography-assets')
+# Separate photography assets directory (persistent volume for Railway)
+# Use Railway's persistent volume at /mnt/data, fallback to local for development
+if os.path.exists('/mnt/data'):
+    PHOTOGRAPHY_ASSETS_DIR = '/mnt/data'
+else:
+    # Local development fallback
+    PHOTOGRAPHY_ASSETS_DIR = os.path.join(BASE_DIR, '..', 'photography-assets')
 
 # Data files (keep with website for easy admin updates)
 PORTFOLIO_DATA_FILE = os.path.join(STATIC_DIR, 'assets', 'portfolio-data-multicategory.json')
