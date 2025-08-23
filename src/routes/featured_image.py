@@ -128,13 +128,25 @@ def extract_exif_data(image_path):
                         shutter = f"1/{int(1/shutter_val)}"
                 
                 # Extract specific EXIF data
+                # Format date to mm/dd/yyyy hh:mm AM/PM
+                date_taken = exif.get('DateTime', exif.get('DateTimeOriginal', 'Unknown'))
+                if date_taken != 'Unknown':
+                    try:
+                        # Parse the EXIF date format (YYYY:MM:DD HH:MM:SS)
+                        from datetime import datetime
+                        dt = datetime.strptime(date_taken, '%Y:%m:%d %H:%M:%S')
+                        # Format to mm/dd/yyyy hh:mm AM/PM
+                        date_taken = dt.strftime('%m/%d/%Y %I:%M %p')
+                    except:
+                        pass  # Keep original if parsing fails
+                
                 camera_info = {
                     'camera': camera,
                     'lens': exif.get('LensModel', exif.get('Lens', 'Unknown')),
                     'aperture': str(aperture),
                     'shutter_speed': str(shutter),
                     'iso': str(exif.get('ISOSpeedRatings', exif.get('ISO', 'Unknown'))),
-                    'date_taken': exif.get('DateTime', exif.get('DateTimeOriginal', 'Unknown')),
+                    'date_taken': date_taken,
                     'gps_info': 'Unknown'  # Simplified for now
                 }
                 
