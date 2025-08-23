@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, send_file, render_template_string, request, redirect, url_for, session
 import os
 import json
-import zipfile
+import tarfile
 import shutil
 import subprocess
 from datetime import datetime
@@ -47,20 +47,16 @@ def emergency_backup_download():
             with open(os.path.join(backup_dir, 'EMERGENCY_RESTORE.txt'), 'w') as f:
                 f.write(emergency_instructions)
             
-            # 4. Create ZIP file
-            zip_path = os.path.join(temp_dir, f"{backup_name}.zip")
-            with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
-                for root, dirs, files in os.walk(backup_dir):
-                    for file in files:
-                        file_path = os.path.join(root, file)
-                        arcname = os.path.relpath(file_path, temp_dir)
-                        zipf.write(file_path, arcname)
+            # 4. Create TAR.GZ file
+            tar_path = os.path.join(temp_dir, f"{backup_name}.tar.gz")
+            with tarfile.open(tar_path, 'w:gz') as tar:
+                tar.add(backup_dir, arcname=backup_name)
             
-            # Return the ZIP file for download
-            return send_file(zip_path, 
+            # Return the TAR.GZ file for download
+            return send_file(tar_path, 
                            as_attachment=True, 
-                           download_name=f"{backup_name}.zip",
-                           mimetype='application/zip')
+                           download_name=f"{backup_name}.tar.gz",
+                           mimetype='application/gzip')
     
     except Exception as e:
         return f"Emergency backup failed: {str(e)}", 500
@@ -217,20 +213,16 @@ def create_manual_backup():
             with open(os.path.join(backup_dir, 'backup_info.json'), 'w') as f:
                 json.dump(backup_info, f, indent=2)
             
-            # 6. Create ZIP file
-            zip_path = os.path.join(temp_dir, f"{backup_name}.zip")
-            with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
-                for root, dirs, files in os.walk(backup_dir):
-                    for file in files:
-                        file_path = os.path.join(root, file)
-                        arcname = os.path.relpath(file_path, temp_dir)
-                        zipf.write(file_path, arcname)
+            # 6. Create TAR.GZ file
+            tar_path = os.path.join(temp_dir, f"{backup_name}.tar.gz")
+            with tarfile.open(tar_path, 'w:gz') as tar:
+                tar.add(backup_dir, arcname=backup_name)
             
-            # Return the ZIP file for download
-            return send_file(zip_path, 
+            # Return the TAR.GZ file for download
+            return send_file(tar_path, 
                            as_attachment=True, 
-                           download_name=f"{backup_name}.zip",
-                           mimetype='application/zip')
+                           download_name=f"{backup_name}.tar.gz",
+                           mimetype='application/gzip')
     
     except Exception as e:
         return redirect(url_for('backup_system.backup_system_dashboard', 
@@ -293,10 +285,10 @@ def create_restore_instructions():
 
 ## 🚨 EMERGENCY RESTORE PROCEDURES
 
-### SCENARIO 1: Complete System Restore from Backup ZIP
+### SCENARIO 1: Complete System Restore from Backup TAR.GZ
 
-1. **Download your backup ZIP file** (from manual backup)
-2. **Extract the ZIP file** to a temporary location
+1. **Download your backup TAR.GZ file** (from manual backup)
+2. **Extract the TAR.GZ file** to a temporary location
 3. **Stop the current application** (if running)
 
 #### Restore Database:
@@ -457,7 +449,7 @@ backup_dashboard_html = '''
             <form method="POST" action="/admin/backup/create-manual">
                 <button type="submit" class="backup-btn">📥 Create Complete Backup</button>
             </form>
-            <small>Downloads a ZIP file with everything needed for disaster recovery.</small>
+            <small>Downloads a TAR.GZ file with everything needed for disaster recovery.</small>
         </div>
 
         <div class="backup-section">
