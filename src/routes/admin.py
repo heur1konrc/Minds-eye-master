@@ -641,6 +641,7 @@ dashboard_html = '''
         <a href="/admin/background">🖼️ Background Management</a>
         <a href="/admin/featured">⭐ Featured Image</a>
         <a href="/admin/category-management">🏷️ Category Management</a>
+        <a href="/admin/backup-system">🛡️ Backup System</a>
     </div>
     
     {% if message %}
