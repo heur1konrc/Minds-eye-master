@@ -40,24 +40,54 @@ FEATURED_DATA_FILE = os.path.join(os.path.dirname(__file__), '..', 'static', 'as
 STATIC_ASSETS_DIR = os.path.join(os.path.dirname(__file__), '..', 'static', 'assets')
 
 def load_featured_data():
-    """Load featured image data from JSON file"""
+    """Load featured image data from SQL database"""
     try:
-        if os.path.exists(FEATURED_DATA_FILE):
-            with open(FEATURED_DATA_FILE, 'r') as f:
-                return json.load(f)
+        from ..models import Image
+        
+        # Get the currently featured image
+        featured_image = Image.query.filter_by(is_featured=True).first()
+        
+        if featured_image:
+            # Get categories for this image
+            image_categories = [cat.category.name for cat in featured_image.categories]
+            
+            return {
+                'id': featured_image.id,
+                'image': featured_image.filename,
+                'title': featured_image.title,
+                'description': featured_image.description,
+                'categories': image_categories,
+                'story': featured_image.featured_story or '',
+                'set_date': featured_image.upload_date.strftime('%Y-%m-%d %H:%M:%S') if featured_image.upload_date else 'Unknown',
+                'exif_data': {}  # Will be populated if needed
+            }
     except Exception as e:
-        print(f"Error loading featured data: {e}")
+        print(f"Error loading featured data from SQL: {e}")
     return None
 
-def save_featured_data(data):
-    """Save featured image data to JSON file"""
+def save_featured_data(image_id, story):
+    """Save featured image data to SQL database"""
     try:
-        os.makedirs(os.path.dirname(FEATURED_DATA_FILE), exist_ok=True)
-        with open(FEATURED_DATA_FILE, 'w') as f:
-            json.dump(data, f, indent=2)
-        return True
+        from ..models import Image, db
+        
+        # Clear any existing featured image
+        Image.query.filter_by(is_featured=True).update({'is_featured': False, 'featured_story': None})
+        
+        # Set the new featured image
+        featured_image = Image.query.get(image_id)
+        if featured_image:
+            featured_image.is_featured = True
+            featured_image.featured_story = story
+            
+            db.session.commit()
+            return True
+        else:
+            print(f"Image with ID {image_id} not found")
+            return False
+            
     except Exception as e:
-        print(f"Error saving featured data: {e}")
+        print(f"Error saving featured data to SQL: {e}")
+        db.session.rollback()
         return False
 
 def extract_exif_data(image_path):
@@ -311,53 +341,10 @@ def featured_admin():
                                     <span class="category-tag">{{ category }}</span>
                                 {% endfor %}
                             </div>
-                            {% if featured_data.exif_data %}
-                                <div class="exif-info">
-                                    <h4 style="color: #ff6b35; margin: 0 0 10px 0;">EXIF Data</h4>
-                                    <div class="exif-grid">
-                                        {% if featured_data.exif_data.camera %}
-                                            <div class="exif-item">
-                                                <div class="exif-label">Camera</div>
-                                                <div class="exif-value">{{ featured_data.exif_data.camera }}</div>
-                                            </div>
-                                        {% endif %}
-                                        {% if featured_data.exif_data.lens %}
-                                            <div class="exif-item">
-                                                <div class="exif-label">Lens</div>
-                                                <div class="exif-value">{{ featured_data.exif_data.lens }}</div>
-                                            </div>
-                                        {% endif %}
-                                        {% if featured_data.exif_data.aperture %}
-                                            <div class="exif-item">
-                                                <div class="exif-label">Aperture</div>
-                                                <div class="exif-value">f/{{ featured_data.exif_data.aperture }}</div>
-                                            </div>
-                                        {% endif %}
-                                        {% if featured_data.exif_data.shutter_speed %}
-                                            <div class="exif-item">
-                                                <div class="exif-label">Shutter Speed</div>
-                                                <div class="exif-value">{{ featured_data.exif_data.shutter_speed }}s</div>
-                                            </div>
-                                        {% endif %}
-                                        {% if featured_data.exif_data.iso %}
-                                            <div class="exif-item">
-                                                <div class="exif-label">ISO</div>
-                                                <div class="exif-value">{{ featured_data.exif_data.iso }}</div>
-                                            </div>
-                                        {% endif %}
-                                        {% if featured_data.exif_data.date_taken %}
-                                            <div class="exif-item">
-                                                <div class="exif-label">Date Taken</div>
-                                                <div class="exif-value">{{ featured_data.exif_data.date_taken }}</div>
-                                            </div>
-                                        {% endif %}
-                                        {% if featured_data.exif_data.gps_info %}
-                                            <div class="exif-item">
-                                                <div class="exif-label">Location</div>
-                                                <div class="exif-value">{{ featured_data.exif_data.gps_info }}</div>
-                                            </div>
-                                        {% endif %}
-                                    </div>
+                            {% if featured_data.story %}
+                                <div style="background: #2a2a2a; padding: 15px; border-radius: 8px; margin-top: 15px;">
+                                    <h4 style="color: #ff6b35; margin: 0 0 10px 0;">Story Behind the Shot</h4>
+                                    <p style="color: #fff; margin: 0; line-height: 1.5;">{{ featured_data.story }}</p>
                                 </div>
                             {% endif %}
                             <p style="color: #888; font-size: 12px; margin-top: 15px;">
