@@ -6,6 +6,24 @@ from PIL.ExifTags import TAGS
 from datetime import datetime
 from ..config import PHOTOGRAPHY_ASSETS_DIR, PORTFOLIO_DATA_FILE
 
+def load_portfolio_data():
+    """Load portfolio data from SQL database"""
+    try:
+        from ..models import Image
+        images = Image.query.all()
+        portfolio_data = []
+        for image in images:
+            portfolio_data.append({
+                'id': str(image.id),
+                'title': image.title or f"Image {image.id}",
+                'image': image.filename,
+                'categories': ['All Work']  # Simplified for now
+            })
+        return portfolio_data
+    except Exception as e:
+        print(f"Error loading portfolio data from SQL: {e}")
+    return []
+
 featured_bp = Blueprint('featured', __name__)
 
 # File paths
@@ -104,7 +122,6 @@ def featured_admin():
     
     try:
         # Load portfolio and featured data
-        from .admin import load_portfolio_data
         portfolio_data = load_portfolio_data()
         featured_data = load_featured_data()
         
@@ -391,7 +408,6 @@ def set_featured_image():
         image_id = request.form.get('image_id')
         
         # Load portfolio data to find the selected image
-        from .admin import load_portfolio_data
         portfolio_data = load_portfolio_data()
         
         selected_image = None

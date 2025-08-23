@@ -30,13 +30,21 @@ def set_background_image(filename):
         json.dump(config, f)
 
 def load_portfolio_data():
-    """Load portfolio data from JSON file"""
+    """Load portfolio data from SQL database"""
     try:
-        if os.path.exists(PORTFOLIO_DATA_FILE):
-            with open(PORTFOLIO_DATA_FILE, 'r') as f:
-                return json.load(f)
+        from ..models import Image
+        images = Image.query.all()
+        portfolio_data = []
+        for image in images:
+            portfolio_data.append({
+                'id': str(image.id),
+                'title': image.title or f"Image {image.id}",
+                'image': image.filename,
+                'categories': ['All Work']  # Simplified for now
+            })
+        return portfolio_data
     except Exception as e:
-        print(f"Error loading portfolio data: {e}")
+        print(f"Error loading portfolio data from SQL: {e}")
     return []
 
 @background_bp.route('/admin/background')
