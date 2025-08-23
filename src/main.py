@@ -501,7 +501,7 @@ if __name__ == '__main__':
 
 @app.route('/api/background')
 def get_current_background_api():
-    """API endpoint to get current background image"""
+    """API endpoint to get current background image - ONLY FROM DATABASE"""
     try:
         from src.models import Image
         
@@ -515,19 +515,27 @@ def get_current_background_api():
                 'title': background_image.title
             })
         else:
-            # Fallback to default sunset background
-            return jsonify({
-                'background_url': 'https://minds-eye-master-production.up.railway.app/static/assets/sunset-hero-B4Va6Mpo.jpg',
-                'filename': 'sunset-hero-B4Va6Mpo.jpg',
-                'title': 'Default Background'
-            })
+            # If no background set, use the first image from database as fallback
+            first_image = Image.query.first()
+            if first_image:
+                return jsonify({
+                    'background_url': f"https://minds-eye-master-production.up.railway.app/static/assets/{first_image.filename}",
+                    'filename': first_image.filename,
+                    'title': first_image.title
+                })
+            else:
+                # No images in database at all
+                return jsonify({
+                    'background_url': None,
+                    'filename': None,
+                    'title': 'No images available'
+                }), 404
             
     except Exception as e:
         print(f"Error getting background: {e}")
-        # Return default background on error
         return jsonify({
-            'background_url': 'https://minds-eye-master-production.up.railway.app/static/assets/sunset-hero-B4Va6Mpo.jpg',
-            'filename': 'sunset-hero-B4Va6Mpo.jpg',
-            'title': 'Default Background'
-        })
+            'background_url': None,
+            'filename': None,
+            'title': 'Error loading background'
+        }), 500
 
