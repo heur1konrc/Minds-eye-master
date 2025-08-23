@@ -189,7 +189,7 @@ def admin_dashboard():
 
 @admin_bp.route('/admin/upload', methods=['POST'])
 def admin_upload():
-    """Handle image upload (single or multiple)"""
+    """Handle image upload (single or multiple) - SAVE TO SQL DATABASE"""
     if not session.get('admin_logged_in'):
         return redirect(url_for('admin.admin_login'))
     
@@ -200,39 +200,21 @@ def admin_upload():
         categories = request.form.getlist('categories')
         image_files = request.files.getlist('image')
         
-        # Load data
-        portfolio_data = load_portfolio_data()
-        categories_config = load_categories_config()
-        available_categories = categories_config['categories']
+        # Import database models
+        from ..models import db, Image, Category, ImageCategory
         
         # Validation
         if not title:
-            return render_template_string(dashboard_html, 
-                                        portfolio_data=portfolio_data,
-                                        available_categories=available_categories,
-                                        message="Please enter an image title", 
-                                        message_type="error")
+            return redirect(url_for('admin.admin_dashboard') + '?message=Please enter an image title&message_type=error')
         
         if not description:
-            return render_template_string(dashboard_html, 
-                                        portfolio_data=portfolio_data,
-                                        available_categories=available_categories,
-                                        message="Please enter a description", 
-                                        message_type="error")
+            return redirect(url_for('admin.admin_dashboard') + '?message=Please enter a description&message_type=error')
         
         if not categories:
-            return render_template_string(dashboard_html, 
-                                        portfolio_data=portfolio_data,
-                                        available_categories=available_categories,
-                                        message="Please select at least one category", 
-                                        message_type="error")
+            return redirect(url_for('admin.admin_dashboard') + '?message=Please select at least one category&message_type=error')
         
         if not image_files or not any(f.filename for f in image_files):
-            return render_template_string(dashboard_html, 
-                                        portfolio_data=portfolio_data,
-                                        available_categories=available_categories,
-                                        message="Please select at least one image file", 
-                                        message_type="error")
+            return redirect(url_for('admin.admin_dashboard') + '?message=Please select at least one image file&message_type=error')
         
         uploaded_count = 0
         
@@ -248,46 +230,59 @@ def admin_upload():
                 file_extension = os.path.splitext(image_file.filename)[1].lower()
                 if not file_extension:
                     file_extension = '.jpg'
+                
                 filename = f"{safe_title}-{unique_id}{file_extension}"
                 
-                # Save file to separate photography assets directory
+                # Save file to photography assets directory
                 os.makedirs(PHOTOGRAPHY_ASSETS_DIR, exist_ok=True)
                 final_path = os.path.join(PHOTOGRAPHY_ASSETS_DIR, filename)
                 image_file.save(final_path)
                 
-                # Create new portfolio entry with multi-category support
-                new_entry = {
-                    "id": safe_title + "-" + unique_id,
-                    "title": f"{title} {uploaded_count + 1}" if len([f for f in image_files if f.filename]) > 1 else title,
-                    "description": description,
-                    "image": filename,
-                    "categories": categories,  # Store as array
-                    "created_at": datetime.now().isoformat()
-                }
+                # Get file size and dimensions
+                file_size = os.path.getsize(final_path)
+                try:
+                    from PIL import Image as PILImage
+                    with PILImage.open(final_path) as img:
+                        width, height = img.size
+                except:
+                    width, height = None, None
                 
-                # Add to portfolio
-                portfolio_data.append(new_entry)
+                # Create new image in database
+                final_title = f"{title} {uploaded_count + 1}" if len([f for f in image_files if f.filename]) > 1 else title
+                new_image = Image(
+                    filename=filename,
+                    title=final_title,
+                    description=description,
+                    file_size=file_size,
+                    width=width,
+                    height=height,
+                    upload_date=datetime.now()
+                )
+                
+                # Add to database
+                db.session.add(new_image)
+                db.session.flush()  # Get the ID
+                
+                # Add category associations
+                for category_name in categories:
+                    category = Category.query.filter_by(name=category_name).first()
+                    if category:
+                        image_category = ImageCategory(image_id=new_image.id, category_id=category.id)
+                        db.session.add(image_category)
+                
                 uploaded_count += 1
         
-        # Save portfolio data
-        save_portfolio_data(portfolio_data)
+        # Commit all changes
+        db.session.commit()
         
         # Redirect with success message
         message = f"{uploaded_count} image(s) uploaded successfully!" if uploaded_count > 1 else "Image uploaded successfully!"
         return redirect(url_for('admin.admin_dashboard') + f'?message={message}&message_type=success')
         
     except Exception as e:
+        db.session.rollback()
         print(f"Upload error: {e}")  # Debug logging
-        portfolio_data = load_portfolio_data()
-        categories_config = load_categories_config()
-        available_categories = categories_config['categories']
-        return render_template_string(dashboard_html, 
-                                    portfolio_data=portfolio_data,
-                                    available_categories=available_categories,
-                                    message=f"Upload failed: {str(e)}", 
-                                    message_type="error")
-
-@admin_bp.route('/admin/bulk-delete', methods=['POST'])
+        return redirect(url_for('admin.admin_dashboard') + f'?message=Upload failed: {str(e)}&message_type=error')n_bp.route('/admin/bulk-delete', methods=['POST'])
 def bulk_delete():
     """Handle bulk deletion of multiple images"""
     if 'admin_logged_in' not in session:
