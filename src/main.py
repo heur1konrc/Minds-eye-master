@@ -366,7 +366,7 @@ def get_portfolio_new():
                     'url': f"https://minds-eye-master-production.up.railway.app/static/assets/{image.filename}",  # PERSISTENT VOLUME!
                     'categories': ['All Work'],  # Default for now
                     'metadata': {
-                        'created_at': image.created_at.isoformat() if image.created_at else None
+                        'created_at': image.upload_date.isoformat() if image.upload_date else None
                     }
                 }
                 portfolio_data.append(portfolio_item)
@@ -415,7 +415,7 @@ def get_portfolio_data():
                     'url': f"https://minds-eye-master-production.up.railway.app/static/assets/{image.filename}",  # PERSISTENT VOLUME!
                     'categories': ['All Work'],  # Default for now
                     'metadata': {
-                        'created_at': image.created_at.isoformat() if image.created_at else None
+                        'created_at': image.upload_date.isoformat() if image.upload_date else None
                     }
                 }
                 portfolio_data.append(portfolio_item)
