@@ -343,6 +343,53 @@ def debug_database():
             'error': str(e)
         }), 500
 
+@app.route('/api/portfolio-new')
+def get_portfolio_new():
+    """BRAND NEW portfolio endpoint - exact copy of working debug code"""
+    try:
+        # EXACT SAME CODE AS WORKING DEBUG ENDPOINT
+        from src.models import Image
+        
+        # Test getting all images - EXACT SAME AS DEBUG
+        all_images = Image.query.all()
+        
+        portfolio_data = []
+        
+        for image in all_images:
+            try:
+                # Create portfolio item with React-expected format
+                portfolio_item = {
+                    'id': str(image.id),
+                    'title': image.title or f"Image {image.id}",
+                    'description': image.description or "",
+                    'filename': image.filename,
+                    'categories': ['All Work'],  # Default for now
+                    'metadata': {
+                        'created_at': image.created_at.isoformat() if image.created_at else None
+                    }
+                }
+                portfolio_data.append(portfolio_item)
+                
+            except Exception as img_error:
+                continue
+        
+        # Create response with CORS headers
+        response = jsonify(portfolio_data)
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+        response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+        
+        return response
+        
+    except Exception as e:
+        # Return empty array with CORS headers on error
+        response = jsonify([])
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+        response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+        
+        return response, 500
+
 @app.route('/assets/portfolio-data')
 def get_portfolio_data():
     """API endpoint that React frontend actually calls - USING EXACT DEBUG CODE"""
