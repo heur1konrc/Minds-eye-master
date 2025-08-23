@@ -44,12 +44,29 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app)
 with app.app_context():
     db.create_all()
-    # Initialize default categories and system config
-    init_default_categories()
-    init_system_config()
-    # Migrate existing images from volume to database
-    migrate_existing_images()
-    print("✅ SQL Database initialized with default data and migrated images")
+    
+    # Only initialize defaults if database is empty (first run)
+    if Category.query.count() == 0:
+        print("🔄 Empty database detected - initializing default categories...")
+        init_default_categories()
+    else:
+        print(f"✅ Database has {Category.query.count()} categories - skipping initialization")
+    
+    # Only initialize system config if empty
+    if SystemConfig.query.count() == 0:
+        print("🔄 Initializing system configuration...")
+        init_system_config()
+    else:
+        print(f"✅ System config exists - skipping initialization")
+    
+    # Only migrate images if no images exist in database
+    if Image.query.count() == 0:
+        print("🔄 No images in database - running migration...")
+        migrate_existing_images()
+    else:
+        print(f"✅ Database has {Image.query.count()} images - skipping migration")
+    
+    print("✅ SQL Database initialization complete")
 
 @app.route('/debug/database-info')
 def debug_database_info():
