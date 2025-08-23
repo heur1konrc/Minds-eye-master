@@ -652,6 +652,22 @@ dashboard_html = '''
             margin-top: 5px;
             font-size: 14px;
         }
+        .category-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 8px;
+            margin-bottom: 8px;
+        }
+        .category-badge {
+            background: #ff6b35;
+            color: #fff;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+            white-space: nowrap;
+        }
     </style>
 </head>
 <body>
@@ -754,7 +770,11 @@ dashboard_html = '''
                 <div class="portfolio-info">
                     <h3>{{ item.title }}</h3>
                     <p>{{ item.description }}</p>
-                    <p><strong>Categories:</strong> {{ item.categories | join(', ') }}</p>
+                    <div class="category-badges">
+                        {% for category in item.categories %}
+                        <span class="category-badge">{{ category }}</span>
+                        {% endfor %}
+                    </div>
                     <form method="POST" action="/admin/delete" style="margin-top: 10px;">
                         <input type="hidden" name="image_id" value="{{ item.id }}">
                         <button type="submit" class="delete-btn" onclick="return confirm('Delete this image?')">Delete</button>
