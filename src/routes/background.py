@@ -12,15 +12,18 @@ background_bp = Blueprint('background', __name__)
 BACKGROUND_CONFIG_FILE = os.path.join(os.path.dirname(__file__), '..', 'static', 'assets', 'background-config.json')
 
 def get_current_background():
-    """Get current background image filename"""
+    """Get current background image filename - DATABASE ONLY"""
     try:
-        if os.path.exists(BACKGROUND_CONFIG_FILE):
-            with open(BACKGROUND_CONFIG_FILE, 'r') as f:
-                config = json.load(f)
-                return config.get('current_background', config.get('background_image', 'sunset-hero-B4Va6Mpo.jpg'))
+        # First check if there's a background set in database
+        from ..models import Image
+        background_image = Image.query.filter_by(is_background=True).first()
+        if background_image:
+            return background_image.filename
+        
+        # If no background set, return None (no hardcoded defaults)
+        return None
     except:
-        pass
-    return 'sunset-hero-B4Va6Mpo.jpg'
+        return None
 
 def set_background_image(filename):
     """Set the current background image"""
@@ -282,7 +285,7 @@ def upload_background():
 
 @background_bp.route('/admin/background/set-from-portfolio', methods=['POST'])
 def set_background_from_portfolio():
-    """Set background image from portfolio selection"""
+    """Set background image from portfolio selection - DATABASE VERSION"""
     if not session.get('admin_logged_in'):
         return redirect(url_for('admin.admin_login'))
     
@@ -292,20 +295,25 @@ def set_background_from_portfolio():
         if not image_filename:
             return redirect(url_for('background.background_manager'))
         
-        # Verify the image exists in the photography assets directory
-        image_path = os.path.join(PHOTOGRAPHY_ASSETS_DIR, image_filename)
-        if not os.path.exists(image_path):
-            # Fallback to old location for backward compatibility
-            old_image_path = os.path.join(os.path.dirname(__file__), '..', 'static', 'assets', image_filename)
-            if not os.path.exists(old_image_path):
-                return redirect(url_for('background.background_manager'))
+        # DATABASE UPDATE - Set background in SQL database
+        from ..models import Image, db
         
-        # Update background config
-        set_background_image(image_filename)
+        # First, clear all existing background flags
+        Image.query.update({Image.is_background: False})
+        
+        # Find the selected image and set it as background
+        selected_image = Image.query.filter_by(filename=image_filename).first()
+        if selected_image:
+            selected_image.is_background = True
+            db.session.commit()
+            print(f"✅ Set background to: {image_filename}")
+        else:
+            print(f"❌ Image not found in database: {image_filename}")
         
         return redirect(url_for('background.background_manager'))
         
     except Exception as e:
+        print(f"❌ Error setting background: {e}")
         return redirect(url_for('background.background_manager'))
 
 @background_bp.route('/api/background')
