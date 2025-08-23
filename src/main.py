@@ -482,8 +482,8 @@ def get_portfolio_data():
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
 def serve(path):
-    # Exclude API and assets routes from catch-all
-    if path.startswith('api/') or path.startswith('assets/'):
+    # Only exclude API routes from catch-all, allow assets to be served
+    if path.startswith('api/'):
         return "Endpoint not found", 404
     
     static_folder_path = app.static_folder
