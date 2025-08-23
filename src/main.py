@@ -9,6 +9,7 @@ import json
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from flask import Flask, send_from_directory, request, jsonify
+from flask_cors import CORS
 from src.models import db, Image, Category, ImageCategory, SystemConfig, init_default_categories, init_system_config, migrate_existing_images
 from src.routes.user import user_bp
 from src.routes.contact import contact_bp
@@ -25,6 +26,10 @@ from src.config import PHOTOGRAPHY_ASSETS_DIR
 
 app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), 'static'))
 app.config['SECRET_KEY'] = 'asdf#FGSgvasgf$5$WGT'
+
+# Enable CORS for all routes and origins
+CORS(app, origins="*", methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"], 
+     allow_headers=["Content-Type", "Authorization", "Access-Control-Allow-Credentials"])
 
 # Ensure photography assets directory exists
 os.makedirs(PHOTOGRAPHY_ASSETS_DIR, exist_ok=True)
