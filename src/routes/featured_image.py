@@ -149,8 +149,18 @@ def extract_exif_data(image_path):
 
 @featured_bp.route('/api/featured')
 def get_featured_image():
-    """API endpoint to get current featured image data"""
+    """API endpoint to get current featured image data with EXIF"""
     featured_data = load_featured_data()
+    
+    if featured_data and featured_data.get('image'):
+        # Extract EXIF data from the image
+        image_path = os.path.join(STATIC_ASSETS_DIR, featured_data['image'])
+        if os.path.exists(image_path):
+            exif_data = extract_exif_data(image_path)
+            featured_data['exif_data'] = exif_data
+        else:
+            featured_data['exif_data'] = {}
+    
     return jsonify(featured_data)
 
 @featured_bp.route('/admin/featured-image')
