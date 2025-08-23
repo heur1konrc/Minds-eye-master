@@ -123,7 +123,7 @@ def get_featured_image():
     featured_data = load_featured_data()
     return jsonify(featured_data)
 
-@featured_bp.route('/admin/featured')
+@featured_bp.route('/admin/featured-image')
 def featured_admin():
     """Featured image admin interface"""
     if not session.get('admin_logged_in'):
