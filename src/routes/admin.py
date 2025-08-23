@@ -343,6 +343,8 @@ def bulk_update_categories():
         return {'success': False, 'message': 'Not authenticated'}, 401
     
     try:
+        from ..models import Image, Category, ImageCategory, db
+        
         data = request.get_json()
         image_ids = data.get('image_ids', [])
         categories = data.get('categories', [])
@@ -353,27 +355,38 @@ def bulk_update_categories():
         if not categories:
             return {'success': False, 'message': 'No categories selected'}
         
-        # Load current portfolio data
-        portfolio_data = load_portfolio_data()
+        # Get category objects from database
+        category_objects = Category.query.filter(Category.name.in_(categories)).all()
+        if len(category_objects) != len(categories):
+            return {'success': False, 'message': 'Some categories not found'}
         
         # Update categories for selected images
         updated_count = 0
-        for item in portfolio_data:
-            if item.get('id') in image_ids:
-                item['categories'] = categories
+        for image_id in image_ids:
+            image = Image.query.get(image_id)
+            if image:
+                # Clear existing categories for this image
+                ImageCategory.query.filter_by(image_id=image_id).delete()
+                
+                # Add new categories
+                for category in category_objects:
+                    image_category = ImageCategory(image_id=image_id, category_id=category.id)
+                    db.session.add(image_category)
+                
                 updated_count += 1
         
-        # Save updated portfolio data
-        save_portfolio_data(portfolio_data)
+        # Commit all changes
+        db.session.commit()
         
         return {
             'success': True, 
-            'message': f'Updated {updated_count} image(s) with categories: {", ".join(categories)}'
+            'message': f'Updated {updated_count} image(s) with {len(categories)} categories'
         }
         
     except Exception as e:
-        print(f"Bulk category update error: {e}")
-        return {'success': False, 'message': str(e)}, 500
+        db.session.rollback()
+        print(f"Bulk update error: {e}")
+        return {'success': False, 'message': f'Update failed: {str(e)}'}, 500
 
 @admin_bp.route('/admin/delete', methods=['POST'])
 def admin_delete():
