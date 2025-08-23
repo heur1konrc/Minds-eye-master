@@ -228,6 +228,70 @@ def api_test():
         print(f"Error in test API: {e}")
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
+@app.route('/api/debug-query')
+def debug_query():
+    """Debug API to understand database query differences"""
+    try:
+        from src.models import Image, Category, ImageCategory, db
+        
+        debug_info = {
+            'step1_import_success': True,
+            'step2_image_count_query': None,
+            'step3_image_count_session': None,
+            'step4_first_image': None,
+            'step5_categories_count': None,
+            'step6_sample_images': []
+        }
+        
+        # Step 2: Try Image.query.count()
+        try:
+            debug_info['step2_image_count_query'] = Image.query.count()
+        except Exception as e:
+            debug_info['step2_image_count_query'] = f"Error: {e}"
+        
+        # Step 3: Try db.session.query(Image).count()
+        try:
+            debug_info['step3_image_count_session'] = db.session.query(Image).count()
+        except Exception as e:
+            debug_info['step3_image_count_session'] = f"Error: {e}"
+        
+        # Step 4: Try to get first image
+        try:
+            first_image = Image.query.first()
+            if first_image:
+                debug_info['step4_first_image'] = {
+                    'id': str(first_image.id),
+                    'filename': first_image.filename,
+                    'title': first_image.title
+                }
+            else:
+                debug_info['step4_first_image'] = "No images found"
+        except Exception as e:
+            debug_info['step4_first_image'] = f"Error: {e}"
+        
+        # Step 5: Check categories
+        try:
+            debug_info['step5_categories_count'] = Category.query.count()
+        except Exception as e:
+            debug_info['step5_categories_count'] = f"Error: {e}"
+        
+        # Step 6: Try to get sample images
+        try:
+            sample_images = Image.query.limit(3).all()
+            for img in sample_images:
+                debug_info['step6_sample_images'].append({
+                    'id': str(img.id),
+                    'filename': img.filename,
+                    'title': img.title
+                })
+        except Exception as e:
+            debug_info['step6_sample_images'] = f"Error: {e}"
+        
+        return jsonify(debug_info)
+        
+    except Exception as e:
+        return jsonify({'error': str(e), 'traceback': str(e)}), 500
+
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
 def serve(path):
