@@ -299,7 +299,7 @@ def get_portfolio_data():
         # Import models properly - same as admin
         from src.models import Image, Category, ImageCategory, db
         
-        # Use same query method as admin - Image.query.all()
+        # Use exact same query method as admin dashboard
         images = Image.query.all()
         portfolio_data = []
         
@@ -307,25 +307,26 @@ def get_portfolio_data():
         
         for image in images:
             try:
-                # Get categories for this image - safe access
-                image_categories = []
-                for image_cat in image.image_categories:
-                    if image_cat.category:
-                        image_categories.append(image_cat.category.name)
+                # Get categories exactly like admin does - using image_categories relationship
+                categories = []
+                for img_cat in image.image_categories:
+                    categories.append(img_cat.category.name)
                 
                 portfolio_item = {
                     'id': str(image.id),  # Convert UUID to string
                     'title': image.title or f"Image {image.id}",
                     'description': image.description or "",
                     'image': image.filename,  # Frontend expects 'image' field
-                    'category': image_categories[0] if image_categories else 'Uncategorized',  # Single category for frontend
-                    'categories': image_categories,  # Full categories array
+                    'category': categories[0] if categories else 'Uncategorized',  # Single category for frontend
+                    'categories': categories,  # Full categories array
                     'metadata': {
                         'created_at': image.created_at.isoformat() if image.created_at else None,
                         'updated_at': image.updated_at.isoformat() if image.updated_at else None
                     }
                 }
                 portfolio_data.append(portfolio_item)
+                print(f"Added image: {image.filename} with categories: {categories}")  # Debug log
+                
             except Exception as img_error:
                 print(f"Error processing image {image.id}: {img_error}")
                 continue
