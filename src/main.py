@@ -127,20 +127,25 @@ def serve_photography_assets(filename):
 def get_portfolio():
     """API endpoint to get portfolio data from SQL database"""
     try:
-        from .models import Image, Category, ImageCategory
+        # Import models properly
+        from src.models import Image, Category, ImageCategory, db
         
-        # Get all images with their categories
-        images = Image.query.all()
+        # Get all images with their categories using proper joins
+        images = db.session.query(Image).all()
         portfolio_data = []
         
+        print(f"Found {len(images)} images in database")  # Debug log
+        
         for image in images:
-            # Get categories for this image
-            categories = [ic.category.name for ic in image.image_categories]
+            # Get categories for this image using proper relationship
+            categories = []
+            for image_category in image.image_categories:
+                categories.append(image_category.category.name)
             
             portfolio_item = {
-                'id': image.id,
-                'title': image.title,
-                'description': image.description,
+                'id': str(image.id),  # Convert UUID to string
+                'title': image.title or f"Image {image.id}",
+                'description': image.description or "",
                 'image': image.filename,  # Frontend expects 'image' field
                 'categories': categories,
                 'metadata': {
@@ -150,24 +155,27 @@ def get_portfolio():
             }
             portfolio_data.append(portfolio_item)
         
+        print(f"Returning {len(portfolio_data)} portfolio items")  # Debug log
         return jsonify(portfolio_data)
         
     except Exception as e:
         print(f"Error loading portfolio from database: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify([]), 500
 
 @app.route('/api/categories')
 def get_categories():
     """API endpoint to get all categories"""
     try:
-        from .models import Category
+        from src.models import Category
         
         categories = Category.query.all()
         categories_data = []
         
         for category in categories:
             category_item = {
-                'id': category.id,
+                'id': str(category.id),
                 'name': category.name,
                 'image_count': len(category.image_categories)
             }
@@ -177,13 +185,15 @@ def get_categories():
         
     except Exception as e:
         print(f"Error loading categories from database: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify([]), 500
 
 @app.route('/api/featured-image')
 def get_featured_image():
     """API endpoint to get featured image"""
     try:
-        from .models import SystemConfig
+        from src.models import SystemConfig, Image
         
         # Get featured image from system config
         featured_config = SystemConfig.query.filter_by(key='featured_image').first()
@@ -191,7 +201,6 @@ def get_featured_image():
             return jsonify({'image': featured_config.value})
         else:
             # Return first image as default
-            from .models import Image
             first_image = Image.query.first()
             if first_image:
                 return jsonify({'image': first_image.filename})
@@ -200,6 +209,8 @@ def get_featured_image():
         
     except Exception as e:
         print(f"Error loading featured image from database: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'image': None}), 500
 
 @app.route('/', defaults={'path': ''})
