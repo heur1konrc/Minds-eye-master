@@ -17,6 +17,7 @@ from src.routes.background import background_bp
 from src.routes.featured_image import featured_bp
 from src.routes.portfolio_management import portfolio_mgmt_bp
 from src.routes.category_management import category_mgmt_bp
+from src.routes.debug_migration import debug_migration_bp
 
 # Import configuration
 from src.config import PHOTOGRAPHY_ASSETS_DIR
@@ -34,6 +35,7 @@ app.register_blueprint(background_bp)
 app.register_blueprint(featured_bp)
 app.register_blueprint(portfolio_mgmt_bp)
 app.register_blueprint(category_mgmt_bp)
+app.register_blueprint(debug_migration_bp)
 
 # Database configuration - Use persistent volume for database
 database_path = os.path.join(PHOTOGRAPHY_ASSETS_DIR, 'mindseye.db')
