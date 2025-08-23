@@ -579,6 +579,16 @@ dashboard_html = '''
         .select-none-btn { background: #757575; color: white; }
         .bulk-update-btn { background: #ff6b35; color: white; }
         .bulk-delete-btn { background: #f44336; color: white; }
+        .backup-quick-btn { 
+            background: #4CAF50; 
+            color: white; 
+            padding: 10px 15px; 
+            text-decoration: none; 
+            border-radius: 5px; 
+            margin-left: 10px; 
+            display: inline-block;
+        }
+        .backup-quick-btn:hover { background: #45a049; }
         .bulk-update-btn:disabled, .bulk-delete-btn:disabled { 
             background: #666; 
             cursor: not-allowed; 
@@ -719,6 +729,7 @@ dashboard_html = '''
                 <button type="button" class="bulk-delete-btn" id="bulkDeleteBtn" onclick="bulkDelete()" disabled>
                     Delete Selected
                 </button>
+                <a href="/admin/backup-system" class="backup-quick-btn">🛡️ Backup System</a>
             </div>
         </div>
         

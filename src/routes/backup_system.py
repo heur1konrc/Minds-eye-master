@@ -11,6 +11,66 @@ import tempfile
 
 backup_system_bp = Blueprint('backup_system', __name__)
 
+# Emergency backup routes - NO ADMIN LOGIN REQUIRED for disaster recovery
+@backup_system_bp.route('/emergency-backup')
+def emergency_backup_portal():
+    """Emergency backup portal - accessible even if admin is broken"""
+    return render_template_string(emergency_backup_html)
+
+@backup_system_bp.route('/emergency-backup/download')
+def emergency_backup_download():
+    """Emergency backup download - NO LOGIN REQUIRED"""
+    try:
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        backup_name = f"emergency_backup_{timestamp}"
+        
+        # Create temporary directory for backup
+        with tempfile.TemporaryDirectory() as temp_dir:
+            backup_dir = os.path.join(temp_dir, backup_name)
+            os.makedirs(backup_dir)
+            
+            # Emergency backup - just essentials
+            # 1. Database file
+            db_file = os.path.join(PHOTOGRAPHY_ASSETS_DIR, 'mindseye.db')
+            if os.path.exists(db_file):
+                shutil.copy2(db_file, backup_dir)
+            
+            # 2. All images
+            if os.path.exists(PHOTOGRAPHY_ASSETS_DIR):
+                for file in os.listdir(PHOTOGRAPHY_ASSETS_DIR):
+                    file_path = os.path.join(PHOTOGRAPHY_ASSETS_DIR, file)
+                    if os.path.isfile(file_path) and not file.endswith('.db'):
+                        shutil.copy2(file_path, backup_dir)
+            
+            # 3. Emergency restore instructions
+            emergency_instructions = create_emergency_restore_instructions()
+            with open(os.path.join(backup_dir, 'EMERGENCY_RESTORE.txt'), 'w') as f:
+                f.write(emergency_instructions)
+            
+            # 4. Create ZIP file
+            zip_path = os.path.join(temp_dir, f"{backup_name}.zip")
+            with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+                for root, dirs, files in os.walk(backup_dir):
+                    for file in files:
+                        file_path = os.path.join(root, file)
+                        arcname = os.path.relpath(file_path, temp_dir)
+                        zipf.write(file_path, arcname)
+            
+            # Return the ZIP file for download
+            return send_file(zip_path, 
+                           as_attachment=True, 
+                           download_name=f"{backup_name}.zip",
+                           mimetype='application/zip')
+    
+    except Exception as e:
+        return f"Emergency backup failed: {str(e)}", 500
+
+@backup_system_bp.route('/emergency-restore-guide')
+def emergency_restore_guide():
+    """Emergency restore guide - accessible without login"""
+    instructions = create_emergency_restore_instructions()
+    return render_template_string(emergency_restore_guide_html, instructions=instructions)
+
 @backup_system_bp.route('/admin/backup-system')
 def backup_system_dashboard():
     """Backup system management dashboard"""
@@ -461,6 +521,200 @@ restore_guide_html = '''
             <div class="danger">
                 <strong>⚠️ EMERGENCY USE ONLY:</strong> These procedures should only be used in case of data loss or system failure.
             </div>
+            
+            <pre>{{ instructions }}</pre>
+        </div>
+    </div>
+</body>
+</html>
+'''
+
+
+def create_emergency_restore_instructions():
+    """Create emergency restore instructions for offline use"""
+    return """
+🚨 EMERGENCY RESTORE INSTRUCTIONS - Mind's Eye Photography 🚨
+
+CRITICAL: These instructions work even if the website is completely down!
+
+=== SCENARIO 1: COMPLETE SYSTEM FAILURE ===
+
+1. STOP EVERYTHING
+   - Don't panic, your data is safe in this backup
+   - Stop any running applications
+
+2. RESTORE DATABASE:
+   Railway Volume Method:
+   - Upload mindseye.db to your Railway volume at /data/mindseye.db
+   - Or use Railway CLI: railway volume mount, then copy file
+
+3. RESTORE IMAGES:
+   - Upload all image files to Railway volume at /data/
+   - Ensure file permissions are correct
+
+4. REDEPLOY APPLICATION:
+   - Push any working version to GitHub
+   - Railway will automatically redeploy
+   - Database and images will be restored
+
+=== SCENARIO 2: ADMIN BROKEN BUT SITE RUNNING ===
+
+1. ACCESS EMERGENCY BACKUP:
+   - Go to: https://your-site.railway.app/emergency-backup
+   - Download fresh backup
+   - This works without admin login!
+
+2. USE FORCE MIGRATION:
+   - Go to: https://your-site.railway.app/debug/force-migration
+   - This recreates database records from volume files
+
+=== SCENARIO 3: DATABASE CORRUPTED ===
+
+1. REPLACE DATABASE FILE:
+   - Use mindseye.db from this backup
+   - Upload to /data/mindseye.db in Railway volume
+
+2. RESTART APPLICATION:
+   - Push any change to trigger redeploy
+   - Database will be restored with all your images
+
+=== RAILWAY VOLUME ACCESS ===
+
+Method 1 - Railway CLI:
+```
+railway login
+railway link [your-project-id]
+railway volume mount
+# Copy files to mounted directory
+```
+
+Method 2 - Railway Dashboard:
+- Go to Railway dashboard
+- Select your project
+- Go to Variables tab
+- Add temporary file upload route
+
+=== EMERGENCY CONTACTS ===
+
+- Railway Support: help@railway.app
+- GitHub Support: support@github.com
+- Emergency Backup URL: /emergency-backup (no login required)
+
+=== PREVENTION ===
+
+- Download backup weekly using /emergency-backup
+- Test restore procedures monthly
+- Keep backup files in multiple locations
+- Document your Railway project details
+
+=== QUICK CHECKLIST ===
+
+□ Stop broken application
+□ Identify what's corrupted (database/images/code)
+□ Restore from backup files
+□ Test functionality
+□ Create new backup immediately
+
+Remember: This backup contains everything needed to restore your photography business!
+
+Last Updated: """ + datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+# Emergency HTML Templates
+emergency_backup_html = '''
+<!DOCTYPE html>
+<html>
+<head>
+    <title>🚨 Emergency Backup - Mind's Eye Photography</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #1a1a1a; color: #fff; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .emergency-header { background: #f44336; padding: 20px; border-radius: 8px; margin-bottom: 20px; text-align: center; }
+        .emergency-section { background: #2d2d2d; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+        .emergency-btn { background: #f44336; color: white; padding: 15px 30px; border: none; border-radius: 5px; cursor: pointer; margin: 10px; font-size: 18px; text-decoration: none; display: inline-block; }
+        .emergency-btn:hover { background: #da190b; }
+        .guide-btn { background: #ff9800; }
+        .guide-btn:hover { background: #e68900; }
+        .warning { background: #ff9800; color: #000; padding: 15px; border-radius: 5px; margin: 15px 0; font-weight: bold; }
+        .info { background: #2196F3; padding: 15px; border-radius: 5px; margin: 15px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="emergency-header">
+            <h1>🚨 EMERGENCY BACKUP PORTAL</h1>
+            <p>This page works even if the admin system is broken!</p>
+        </div>
+
+        <div class="warning">
+            ⚠️ WARNING: This is for emergency use only. Use this if the main admin system is not working.
+        </div>
+
+        <div class="emergency-section">
+            <h2>📥 Emergency Backup</h2>
+            <p>Download a complete backup of your images and database. No login required!</p>
+            <a href="/emergency-backup/download" class="emergency-btn">📥 Download Emergency Backup</a>
+            <p><small>Downloads: Database file + All images + Restore instructions</small></p>
+        </div>
+
+        <div class="emergency-section">
+            <h2>📋 Emergency Restore Guide</h2>
+            <p>Step-by-step instructions for disaster recovery.</p>
+            <a href="/emergency-restore-guide" class="emergency-btn guide-btn">📋 View Restore Guide</a>
+            <p><small>Works offline - save this page for emergencies!</small></p>
+        </div>
+
+        <div class="info">
+            <h3>🔗 Emergency URLs (bookmark these!):</h3>
+            <ul>
+                <li><strong>Emergency Backup:</strong> /emergency-backup</li>
+                <li><strong>Emergency Download:</strong> /emergency-backup/download</li>
+                <li><strong>Restore Guide:</strong> /emergency-restore-guide</li>
+                <li><strong>Force Migration:</strong> /debug/force-migration</li>
+                <li><strong>Volume Info:</strong> /debug/volume-info</li>
+            </ul>
+        </div>
+
+        <div class="emergency-section">
+            <h2>🏠 Return to Normal Operations</h2>
+            <p>If the admin system is working, use the regular backup system:</p>
+            <a href="/admin/dashboard" class="emergency-btn" style="background: #4CAF50;">🏠 Admin Dashboard</a>
+            <a href="/admin/backup-system" class="emergency-btn" style="background: #4CAF50;">🛡️ Backup System</a>
+        </div>
+    </div>
+</body>
+</html>
+'''
+
+emergency_restore_guide_html = '''
+<!DOCTYPE html>
+<html>
+<head>
+    <title>🚨 Emergency Restore Guide - Mind's Eye Photography</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #1a1a1a; color: #fff; line-height: 1.6; }
+        .container { max-width: 1000px; margin: 0 auto; }
+        .emergency-header { background: #f44336; padding: 20px; border-radius: 8px; margin-bottom: 20px; text-align: center; }
+        .content { background: #2d2d2d; padding: 20px; border-radius: 8px; }
+        pre { background: #1a1a1a; padding: 15px; border-radius: 5px; overflow-x: auto; white-space: pre-wrap; }
+        .emergency-btn { background: #f44336; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin: 10px; text-decoration: none; display: inline-block; }
+        .emergency-btn:hover { background: #da190b; }
+        .warning { background: #ff9800; color: #000; padding: 15px; border-radius: 5px; margin: 15px 0; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="emergency-header">
+            <h1>🚨 EMERGENCY RESTORE GUIDE</h1>
+            <p>Save this page offline for disaster recovery!</p>
+        </div>
+
+        <div class="warning">
+            ⚠️ EMERGENCY USE ONLY: These procedures are for when normal admin access is not available.
+        </div>
+
+        <div class="content">
+            <a href="/emergency-backup" class="emergency-btn">← Back to Emergency Portal</a>
+            <a href="/emergency-backup/download" class="emergency-btn">📥 Download Backup</a>
             
             <pre>{{ instructions }}</pre>
         </div>
