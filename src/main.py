@@ -363,7 +363,7 @@ def get_portfolio_new():
                     'title': image.title or f"Image {image.id}",
                     'description': image.description or "",
                     'filename': image.filename,
-                    'url': f"https://minds-eye-master-production.up.railway.app/assets/{image.filename}",  # FULL URL!
+                    'url': f"https://minds-eye-master-production.up.railway.app/uploads/{image.filename}",  # CORRECT PATH!
                     'categories': ['All Work'],  # Default for now
                     'metadata': {
                         'created_at': image.created_at.isoformat() if image.created_at else None
@@ -412,7 +412,7 @@ def get_portfolio_data():
                     'title': image.title or f"Image {image.id}",
                     'description': image.description or "",
                     'filename': image.filename,
-                    'url': f"https://minds-eye-master-production.up.railway.app/assets/{image.filename}",  # FULL URL!
+                    'url': f"https://minds-eye-master-production.up.railway.app/uploads/{image.filename}",  # CORRECT PATH!
                     'categories': ['All Work'],  # Default for now
                     'metadata': {
                         'created_at': image.created_at.isoformat() if image.created_at else None
