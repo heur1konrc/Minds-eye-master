@@ -213,6 +213,23 @@ def get_featured_image():
         traceback.print_exc()
         return jsonify({'image': None}), 500
 
+@app.route('/api/test')
+def api_test():
+    """Simple test API endpoint without database queries"""
+    try:
+        return jsonify({
+            'status': 'success',
+            'message': 'API is working!',
+            'test_data': [
+                {'id': 1, 'name': 'Test Item 1'},
+                {'id': 2, 'name': 'Test Item 2'},
+                {'id': 3, 'name': 'Test Item 3'}
+            ]
+        })
+    except Exception as e:
+        print(f"Error in test API: {e}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
 def serve(path):
