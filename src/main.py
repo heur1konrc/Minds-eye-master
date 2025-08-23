@@ -345,40 +345,40 @@ def debug_database():
 
 @app.route('/assets/portfolio-data')
 def get_portfolio_data():
-    """API endpoint that React frontend actually calls - BULLETPROOF VERSION"""
+    """API endpoint that React frontend actually calls - USING EXACT DEBUG CODE"""
     try:
-        # Import models - MINIMAL imports
+        # EXACT SAME CODE AS DEBUG ENDPOINT THAT WORKS
         from src.models import Image
         
-        # SIMPLE query - just get all images, no relationships
-        images = Image.query.all()
+        # Test getting all images - EXACT SAME AS DEBUG
+        all_images = Image.query.all()
+        print(f"PORTFOLIO API: Total images retrieved = {len(all_images)}")
+        
         portfolio_data = []
         
-        print(f"SIMPLE QUERY: Found {len(images)} images in database")  # Debug log
-        
-        for image in images:
+        for image in all_images:
             try:
-                # MINIMAL data - no categories, just basic image info
+                # Create portfolio item with React-expected format
                 portfolio_item = {
-                    'id': str(image.id),  # Convert UUID to string for JSON
+                    'id': str(image.id),
                     'title': image.title or f"Image {image.id}",
                     'description': image.description or "",
-                    'filename': image.filename,  # React frontend expects 'filename'
-                    'categories': ['All Work'],  # Default category for now
+                    'filename': image.filename,
+                    'categories': ['All Work'],  # Default for now
                     'metadata': {
                         'created_at': image.created_at.isoformat() if image.created_at else None
                     }
                 }
                 portfolio_data.append(portfolio_item)
-                print(f"SIMPLE: Added image {image.filename}")
+                print(f"PORTFOLIO API: Added image {image.filename}")
                 
             except Exception as img_error:
-                print(f"Error processing image {image.id}: {img_error}")
+                print(f"PORTFOLIO API: Error processing image {image.id}: {img_error}")
                 continue
         
-        print(f"SIMPLE QUERY: Returning {len(portfolio_data)} portfolio items")
+        print(f"PORTFOLIO API: Returning {len(portfolio_data)} portfolio items")
         
-        # Create response with CORS headers for React frontend
+        # Create response with CORS headers
         response = jsonify(portfolio_data)
         response.headers.add('Access-Control-Allow-Origin', '*')
         response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
@@ -387,11 +387,11 @@ def get_portfolio_data():
         return response
         
     except Exception as e:
-        print(f"SIMPLE QUERY ERROR: {e}")
+        print(f"PORTFOLIO API ERROR: {e}")
         import traceback
-        traceback.print_exc()
+        print(f"PORTFOLIO API TRACEBACK: {traceback.format_exc()}")
         
-        # Return error with CORS headers
+        # Return empty array with CORS headers on error
         response = jsonify([])
         response.headers.add('Access-Control-Allow-Origin', '*')
         response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
