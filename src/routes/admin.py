@@ -282,7 +282,9 @@ def admin_upload():
     except Exception as e:
         db.session.rollback()
         print(f"Upload error: {e}")  # Debug logging
-        return redirect(url_for('admin.admin_dashboard') + f'?message=Upload failed: {str(e)}&message_type=error')n_bp.route('/admin/bulk-delete', methods=['POST'])
+        return redirect(url_for('admin.admin_dashboard') + f'?message=Upload failed: {str(e)}&message_type=error')
+
+@admin_bp.route('/admin/bulk-delete', methods=['POST'])
 def bulk_delete():
     """Handle bulk deletion of multiple images"""
     if 'admin_logged_in' not in session:
