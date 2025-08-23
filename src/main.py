@@ -292,6 +292,46 @@ def debug_query():
     except Exception as e:
         return jsonify({'error': str(e), 'traceback': str(e)}), 500
 
+@app.route('/assets/portfolio-data')
+def get_portfolio_data():
+    """API endpoint that React frontend actually calls"""
+    try:
+        # Import models properly - same as admin
+        from src.models import Image, Category, ImageCategory, db
+        
+        # Use same query method as admin - Image.query.all()
+        images = Image.query.all()
+        portfolio_data = []
+        
+        print(f"Found {len(images)} images in database for /assets/portfolio-data")  # Debug log
+        
+        for image in images:
+            # Get categories for this image - same as admin
+            image_categories = [cat.category.name for cat in image.categories]
+            
+            portfolio_item = {
+                'id': str(image.id),  # Convert UUID to string
+                'title': image.title or f"Image {image.id}",
+                'description': image.description or "",
+                'image': image.filename,  # Frontend expects 'image' field
+                'category': image_categories[0] if image_categories else 'Uncategorized',  # Single category for frontend
+                'categories': image_categories,  # Full categories array
+                'metadata': {
+                    'created_at': image.created_at.isoformat() if image.created_at else None,
+                    'updated_at': image.updated_at.isoformat() if image.updated_at else None
+                }
+            }
+            portfolio_data.append(portfolio_item)
+        
+        print(f"Returning {len(portfolio_data)} portfolio items for React frontend")  # Debug log
+        return jsonify(portfolio_data)
+        
+    except Exception as e:
+        print(f"Error loading portfolio from database: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify([]), 500
+
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
 def serve(path):
