@@ -37,7 +37,7 @@ featured_bp = Blueprint('featured', __name__)
 
 # File paths
 FEATURED_DATA_FILE = os.path.join(os.path.dirname(__file__), '..', 'static', 'assets', 'featured-image.json')
-STATIC_ASSETS_DIR = os.path.join(os.path.dirname(__file__), '..', 'static', 'assets')
+STATIC_ASSETS_DIR = PHOTOGRAPHY_ASSETS_DIR  # Use the same directory as configured
 
 def load_featured_data():
     """Load featured image data from SQL database"""
@@ -153,13 +153,23 @@ def get_featured_image():
     featured_data = load_featured_data()
     
     if featured_data and featured_data.get('image'):
-        # Extract EXIF data from the image
-        image_path = os.path.join(STATIC_ASSETS_DIR, featured_data['image'])
-        if os.path.exists(image_path):
-            exif_data = extract_exif_data(image_path)
-            featured_data['exif_data'] = exif_data
-        else:
-            featured_data['exif_data'] = {}
+        # Try multiple possible image locations
+        possible_paths = [
+            os.path.join(STATIC_ASSETS_DIR, featured_data['image']),  # Photography assets dir
+            os.path.join(os.path.dirname(__file__), '..', 'static', 'assets', featured_data['image']),  # Static assets
+            os.path.join('/home/ubuntu/mindseye-complete-restore/src/static/assets', featured_data['image'])  # Absolute static path
+        ]
+        
+        exif_data = {}
+        for image_path in possible_paths:
+            if os.path.exists(image_path):
+                print(f"Found image at: {image_path}")
+                exif_data = extract_exif_data(image_path)
+                break
+            else:
+                print(f"Image not found at: {image_path}")
+        
+        featured_data['exif_data'] = exif_data
     
     return jsonify(featured_data)
 
