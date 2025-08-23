@@ -388,6 +388,11 @@ def featured_admin():
                             </div>
                             <form method="POST" action="/admin/featured/set" style="margin: 0;">
                                 <input type="hidden" name="image_id" value="{{ image.id }}">
+                                <div style="margin-bottom: 10px;">
+                                    <label style="display: block; color: #ff6b35; font-size: 14px; margin-bottom: 5px;">Story Behind the Shot:</label>
+                                    <textarea name="featured_story" placeholder="Enter the story behind this image..." 
+                                              style="width: 100%; height: 80px; padding: 8px; border: 1px solid #555; border-radius: 5px; background: #333; color: #fff; font-size: 12px; resize: vertical;">{{ image.featured_story or '' }}</textarea>
+                                </div>
                                 <button type="submit" class="set-featured-btn">Set as Featured</button>
                             </form>
                         </div>
@@ -409,42 +414,31 @@ def featured_admin():
 
 @featured_bp.route('/admin/featured/set', methods=['POST'])
 def set_featured_image():
-    """Set an image as featured"""
+    """Set an image as featured and save story to SQL database"""
     if not session.get('admin_logged_in'):
         return redirect(url_for('admin.admin_login'))
     
     try:
         image_id = request.form.get('image_id')
+        featured_story = request.form.get('featured_story', '')
         
-        # Load portfolio data to find the selected image
-        portfolio_data = load_portfolio_data()
+        # Update the image in SQL database
+        from ..models import Image, db
         
-        selected_image = None
-        for image in portfolio_data:
-            if image['id'] == image_id:
-                selected_image = image
-                break
+        # First, clear any existing featured image
+        Image.query.filter_by(is_featured=True).update({'is_featured': False})
         
-        if not selected_image:
-            return redirect(url_for('featured.featured_admin', message='Image not found', message_type='error'))
-        
-        # Create featured image data with EXIF extraction
-        featured_data = {
-            'id': selected_image['id'],
-            'title': selected_image['title'],
-            'description': selected_image['description'],
-            'image': selected_image['image'],
-            'categories': selected_image['categories'],
-            'exif_data': extract_exif_data(os.path.join(PHOTOGRAPHY_ASSETS_DIR, selected_image['image'])),
-            'set_date': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        }
-        
-        # Save featured data
-        if save_featured_data(featured_data):
-            return redirect(url_for('featured.featured_admin', message='Featured image set successfully!', message_type='success'))
+        # Set the new featured image and save story
+        image = Image.query.get(image_id)
+        if image:
+            image.is_featured = True
+            image.featured_story = featured_story
+            db.session.commit()
+            
+            return redirect(url_for('featured.featured_admin') + '?success=Featured image and story saved successfully!')
         else:
-            return redirect(url_for('featured.featured_admin', message='Error saving featured image', message_type='error'))
+            return redirect(url_for('featured.featured_admin') + '?error=Image not found')
             
     except Exception as e:
-        return redirect(url_for('featured.featured_admin', message=f'Error: {str(e)}', message_type='error'))
+        return redirect(url_for('featured.featured_admin') + f'?error=Error setting featured image: {str(e)}')
 
