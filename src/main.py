@@ -296,10 +296,10 @@ def debug_query():
 def get_portfolio_data():
     """API endpoint that React frontend actually calls"""
     try:
-        # Import models properly - same as admin
-        from src.models import Image, Category, ImageCategory, db
+        # Import models exactly like admin
+        from src.models import Image, Category
         
-        # Use exact same query method as admin dashboard
+        # Use EXACT same query as admin dashboard - Image.query.all()
         images = Image.query.all()
         portfolio_data = []
         
@@ -307,31 +307,29 @@ def get_portfolio_data():
         
         for image in images:
             try:
-                # Get categories exactly like admin does - using image_categories relationship
-                categories = []
-                for img_cat in image.image_categories:
-                    categories.append(img_cat.category.name)
+                # Get categories EXACTLY like admin does - image.categories
+                image_categories = [cat.category.name for cat in image.categories]
                 
                 portfolio_item = {
-                    'id': str(image.id),  # Convert UUID to string
+                    'id': str(image.id),  # Convert UUID to string for JSON
                     'title': image.title or f"Image {image.id}",
                     'description': image.description or "",
                     'image': image.filename,  # Frontend expects 'image' field
-                    'category': categories[0] if categories else 'Uncategorized',  # Single category for frontend
-                    'categories': categories,  # Full categories array
+                    'category': image_categories[0] if image_categories else 'Uncategorized',
+                    'categories': image_categories,
                     'metadata': {
                         'created_at': image.created_at.isoformat() if image.created_at else None,
                         'updated_at': image.updated_at.isoformat() if image.updated_at else None
                     }
                 }
                 portfolio_data.append(portfolio_item)
-                print(f"Added image: {image.filename} with categories: {categories}")  # Debug log
+                print(f"Added image: {image.filename} with categories: {image_categories}")
                 
             except Exception as img_error:
                 print(f"Error processing image {image.id}: {img_error}")
                 continue
         
-        print(f"Returning {len(portfolio_data)} portfolio items for React frontend")  # Debug log
+        print(f"Returning {len(portfolio_data)} portfolio items for React frontend")
         return jsonify(portfolio_data)
         
     except Exception as e:
