@@ -297,7 +297,7 @@ def get_portfolio_data():
     """API endpoint that React frontend actually calls"""
     try:
         # Import models exactly like admin
-        from src.models import Image, Category
+        from src.models import Image, Category, ImageCategory
         
         # Use EXACT same query as admin dashboard - Image.query.all()
         images = Image.query.all()
@@ -307,15 +307,23 @@ def get_portfolio_data():
         
         for image in images:
             try:
-                # Get categories EXACTLY like admin does - image.categories
-                image_categories = [cat.category.name for cat in image.categories]
+                # Get categories using ImageCategory relationship - SAFE method
+                image_categories = []
+                try:
+                    # Query ImageCategory table for this image
+                    image_category_relations = ImageCategory.query.filter_by(image_id=image.id).all()
+                    for relation in image_category_relations:
+                        if relation.category:
+                            image_categories.append(relation.category.name)
+                except Exception as cat_error:
+                    print(f"Error getting categories for image {image.id}: {cat_error}")
+                    image_categories = ['Uncategorized']
                 
                 portfolio_item = {
                     'id': str(image.id),  # Convert UUID to string for JSON
                     'title': image.title or f"Image {image.id}",
                     'description': image.description or "",
-                    'image': image.filename,  # Frontend expects 'image' field
-                    'category': image_categories[0] if image_categories else 'Uncategorized',
+                    'filename': image.filename,  # React frontend expects 'filename'
                     'categories': image_categories,
                     'metadata': {
                         'created_at': image.created_at.isoformat() if image.created_at else None,
@@ -330,13 +338,27 @@ def get_portfolio_data():
                 continue
         
         print(f"Returning {len(portfolio_data)} portfolio items for React frontend")
-        return jsonify(portfolio_data)
+        
+        # Create response with CORS headers for React frontend
+        response = jsonify(portfolio_data)
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+        response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+        
+        return response
         
     except Exception as e:
         print(f"Error loading portfolio from database: {e}")
         import traceback
         traceback.print_exc()
-        return jsonify([]), 500
+        
+        # Return error with CORS headers
+        response = jsonify([])
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+        response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+        
+        return response, 500
 
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
