@@ -292,6 +292,57 @@ def debug_query():
     except Exception as e:
         return jsonify({'error': str(e), 'traceback': str(e)}), 500
 
+@app.route('/api/debug-db')
+def debug_database():
+    """Debug endpoint to test database connection step by step"""
+    debug_info = []
+    
+    try:
+        debug_info.append("Step 1: Starting debug")
+        
+        # Test database connection
+        from src.models import db
+        debug_info.append("Step 2: Imported db")
+        
+        # Test Image model import
+        from src.models import Image
+        debug_info.append("Step 3: Imported Image model")
+        
+        # Test basic query
+        image_count = Image.query.count()
+        debug_info.append(f"Step 4: Image count = {image_count}")
+        
+        # Test getting first image
+        first_image = Image.query.first()
+        if first_image:
+            debug_info.append(f"Step 5: First image = {first_image.filename}")
+        else:
+            debug_info.append("Step 5: No images found")
+        
+        # Test getting all images
+        all_images = Image.query.all()
+        debug_info.append(f"Step 6: Total images retrieved = {len(all_images)}")
+        
+        if all_images:
+            debug_info.append(f"Step 7: Sample filenames = {[img.filename for img in all_images[:3]]}")
+        
+        return jsonify({
+            'status': 'success',
+            'debug_steps': debug_info,
+            'image_count': image_count
+        })
+        
+    except Exception as e:
+        debug_info.append(f"ERROR: {str(e)}")
+        import traceback
+        debug_info.append(f"TRACEBACK: {traceback.format_exc()}")
+        
+        return jsonify({
+            'status': 'error',
+            'debug_steps': debug_info,
+            'error': str(e)
+        }), 500
+
 @app.route('/assets/portfolio-data')
 def get_portfolio_data():
     """API endpoint that React frontend actually calls - BULLETPROOF VERSION"""
