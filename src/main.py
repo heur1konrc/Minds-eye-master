@@ -497,3 +497,37 @@ if __name__ == '__main__':
     import os
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=False)
+
+
+@app.route('/api/background')
+def get_current_background_api():
+    """API endpoint to get current background image"""
+    try:
+        from src.models import Image
+        
+        # Get the current background image from database
+        background_image = Image.query.filter_by(is_background=True).first()
+        
+        if background_image:
+            return jsonify({
+                'background_url': f"https://minds-eye-master-production.up.railway.app/static/assets/{background_image.filename}",
+                'filename': background_image.filename,
+                'title': background_image.title
+            })
+        else:
+            # Fallback to default sunset background
+            return jsonify({
+                'background_url': 'https://minds-eye-master-production.up.railway.app/static/assets/sunset-hero-B4Va6Mpo.jpg',
+                'filename': 'sunset-hero-B4Va6Mpo.jpg',
+                'title': 'Default Background'
+            })
+            
+    except Exception as e:
+        print(f"Error getting background: {e}")
+        # Return default background on error
+        return jsonify({
+            'background_url': 'https://minds-eye-master-production.up.railway.app/static/assets/sunset-hero-B4Va6Mpo.jpg',
+            'filename': 'sunset-hero-B4Va6Mpo.jpg',
+            'title': 'Default Background'
+        })
+
