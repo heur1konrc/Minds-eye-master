@@ -725,11 +725,11 @@ dashboard_html = '''
             {% for item in portfolio_data %}
             <div class="portfolio-item">
                 <input type="checkbox" class="portfolio-checkbox" name="selected_images" value="{{ item.id }}" onchange="updateSelectedCount()">
-                <img src="/static/assets/{{ item.image }}" alt="{{ item.title }}">
+                <img src="/static/assets/{{ item.filename }}" alt="{{ item.title }}">
                 <div class="portfolio-info">
                     <h3>{{ item.title }}</h3>
                     <p>{{ item.description }}</p>
-                    <p><strong>Categories:</strong> {{ item.get('categories', [item.get('category', 'Unknown')]) | join(', ') }}</p>
+                    <p><strong>Categories:</strong> {{ item.categories | join(', ') }}</p>
                     <form method="POST" action="/admin/delete" style="margin-top: 10px;">
                         <input type="hidden" name="image_id" value="{{ item.id }}">
                         <button type="submit" class="delete-btn" onclick="return confirm('Delete this image?')">Delete</button>
