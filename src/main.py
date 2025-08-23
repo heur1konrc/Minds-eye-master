@@ -233,6 +233,10 @@ def api_test():
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
 def serve(path):
+    # Exclude API routes from catch-all
+    if path.startswith('api/'):
+        return "API endpoint not found", 404
+    
     static_folder_path = app.static_folder
     if static_folder_path is None:
             return "Static folder not configured", 404
