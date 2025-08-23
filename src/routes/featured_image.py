@@ -7,18 +7,27 @@ from datetime import datetime
 from ..config import PHOTOGRAPHY_ASSETS_DIR, PORTFOLIO_DATA_FILE
 
 def load_portfolio_data():
-    """Load portfolio data from SQL database"""
+    """Load portfolio data from SQL database - EXACT SAME AS ADMIN DASHBOARD"""
     try:
-        from ..models import Image
+        from ..models import Image, Category
+        
+        # Get all images from database - EXACT SAME QUERY
         images = Image.query.all()
         portfolio_data = []
+        
         for image in images:
+            # Get categories for this image
+            image_categories = [cat.category.name for cat in image.categories]
+            
             portfolio_data.append({
-                'id': str(image.id),
-                'title': image.title or f"Image {image.id}",
-                'image': image.filename,
-                'categories': ['All Work']  # Simplified for now
+                'id': image.id,
+                'image': image.filename,  # Featured manager expects 'image' field
+                'title': image.title,
+                'description': image.description,
+                'categories': image_categories,
+                'upload_date': image.upload_date.isoformat() if image.upload_date else None,
             })
+        
         return portfolio_data
     except Exception as e:
         print(f"Error loading portfolio data from SQL: {e}")
