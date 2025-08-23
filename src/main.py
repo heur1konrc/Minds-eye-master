@@ -357,6 +357,18 @@ def get_portfolio_new():
         
         for image in all_images:
             try:
+                # Get actual categories for this image - SAME AS ADMIN
+                image_categories = []
+                try:
+                    image_categories = [cat.category.name for cat in image.categories]
+                except Exception as cat_error:
+                    print(f"Category error for image {image.id}: {cat_error}")
+                    image_categories = ['Miscellaneous']
+                
+                # If no categories assigned, use Miscellaneous
+                if not image_categories:
+                    image_categories = ['Miscellaneous']
+                
                 # Create portfolio item with React-expected format
                 portfolio_item = {
                     'id': str(image.id),
@@ -364,7 +376,7 @@ def get_portfolio_new():
                     'description': image.description or "",
                     'filename': image.filename,
                     'url': f"https://minds-eye-master-production.up.railway.app/static/assets/{image.filename}",  # PERSISTENT VOLUME!
-                    'categories': ['All Work'],  # Default for now
+                    'categories': image_categories,  # ACTUAL CATEGORIES FROM DATABASE
                     'metadata': {
                         'created_at': image.upload_date.isoformat() if image.upload_date else None
                     }
@@ -406,6 +418,18 @@ def get_portfolio_data():
         
         for image in all_images:
             try:
+                # Get actual categories for this image - SAME AS ADMIN
+                image_categories = []
+                try:
+                    image_categories = [cat.category.name for cat in image.categories]
+                except Exception as cat_error:
+                    print(f"Category error for image {image.id}: {cat_error}")
+                    image_categories = ['Miscellaneous']
+                
+                # If no categories assigned, use Miscellaneous
+                if not image_categories:
+                    image_categories = ['Miscellaneous']
+                
                 # Create portfolio item with React-expected format
                 portfolio_item = {
                     'id': str(image.id),
@@ -413,7 +437,7 @@ def get_portfolio_data():
                     'description': image.description or "",
                     'filename': image.filename,
                     'url': f"https://minds-eye-master-production.up.railway.app/static/assets/{image.filename}",  # PERSISTENT VOLUME!
-                    'categories': ['All Work'],  # Default for now
+                    'categories': image_categories,  # ACTUAL CATEGORIES FROM DATABASE
                     'metadata': {
                         'created_at': image.upload_date.isoformat() if image.upload_date else None
                     }
