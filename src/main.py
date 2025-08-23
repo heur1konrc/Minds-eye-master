@@ -306,22 +306,29 @@ def get_portfolio_data():
         print(f"Found {len(images)} images in database for /assets/portfolio-data")  # Debug log
         
         for image in images:
-            # Get categories for this image - same as admin
-            image_categories = [cat.category.name for cat in image.categories]
-            
-            portfolio_item = {
-                'id': str(image.id),  # Convert UUID to string
-                'title': image.title or f"Image {image.id}",
-                'description': image.description or "",
-                'image': image.filename,  # Frontend expects 'image' field
-                'category': image_categories[0] if image_categories else 'Uncategorized',  # Single category for frontend
-                'categories': image_categories,  # Full categories array
-                'metadata': {
-                    'created_at': image.created_at.isoformat() if image.created_at else None,
-                    'updated_at': image.updated_at.isoformat() if image.updated_at else None
+            try:
+                # Get categories for this image - safe access
+                image_categories = []
+                for image_cat in image.image_categories:
+                    if image_cat.category:
+                        image_categories.append(image_cat.category.name)
+                
+                portfolio_item = {
+                    'id': str(image.id),  # Convert UUID to string
+                    'title': image.title or f"Image {image.id}",
+                    'description': image.description or "",
+                    'image': image.filename,  # Frontend expects 'image' field
+                    'category': image_categories[0] if image_categories else 'Uncategorized',  # Single category for frontend
+                    'categories': image_categories,  # Full categories array
+                    'metadata': {
+                        'created_at': image.created_at.isoformat() if image.created_at else None,
+                        'updated_at': image.updated_at.isoformat() if image.updated_at else None
+                    }
                 }
-            }
-            portfolio_data.append(portfolio_item)
+                portfolio_data.append(portfolio_item)
+            except Exception as img_error:
+                print(f"Error processing image {image.id}: {img_error}")
+                continue
         
         print(f"Returning {len(portfolio_data)} portfolio items for React frontend")  # Debug log
         return jsonify(portfolio_data)
