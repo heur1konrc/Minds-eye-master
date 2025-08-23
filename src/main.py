@@ -20,6 +20,7 @@ from src.routes.portfolio_management import portfolio_mgmt_bp
 from src.routes.category_management import category_mgmt_bp
 from src.routes.debug_migration import debug_migration_bp
 from src.routes.backup_system import backup_system_bp
+from src.routes.og_image import og_bp
 
 # Import configuration
 from src.config import PHOTOGRAPHY_ASSETS_DIR
@@ -43,6 +44,7 @@ app.register_blueprint(portfolio_mgmt_bp)
 app.register_blueprint(category_mgmt_bp)
 app.register_blueprint(debug_migration_bp)
 app.register_blueprint(backup_system_bp)
+app.register_blueprint(og_bp)
 
 # Database configuration - Use persistent volume for database
 database_path = os.path.join(PHOTOGRAPHY_ASSETS_DIR, 'mindseye.db')
