@@ -294,50 +294,38 @@ def debug_query():
 
 @app.route('/assets/portfolio-data')
 def get_portfolio_data():
-    """API endpoint that React frontend actually calls"""
+    """API endpoint that React frontend actually calls - BULLETPROOF VERSION"""
     try:
-        # Import models exactly like admin
-        from src.models import Image, Category, ImageCategory
+        # Import models - MINIMAL imports
+        from src.models import Image
         
-        # Use EXACT same query as admin dashboard - Image.query.all()
+        # SIMPLE query - just get all images, no relationships
         images = Image.query.all()
         portfolio_data = []
         
-        print(f"Found {len(images)} images in database for /assets/portfolio-data")  # Debug log
+        print(f"SIMPLE QUERY: Found {len(images)} images in database")  # Debug log
         
         for image in images:
             try:
-                # Get categories using ImageCategory relationship - SAFE method
-                image_categories = []
-                try:
-                    # Query ImageCategory table for this image
-                    image_category_relations = ImageCategory.query.filter_by(image_id=image.id).all()
-                    for relation in image_category_relations:
-                        if relation.category:
-                            image_categories.append(relation.category.name)
-                except Exception as cat_error:
-                    print(f"Error getting categories for image {image.id}: {cat_error}")
-                    image_categories = ['Uncategorized']
-                
+                # MINIMAL data - no categories, just basic image info
                 portfolio_item = {
                     'id': str(image.id),  # Convert UUID to string for JSON
                     'title': image.title or f"Image {image.id}",
                     'description': image.description or "",
                     'filename': image.filename,  # React frontend expects 'filename'
-                    'categories': image_categories,
+                    'categories': ['All Work'],  # Default category for now
                     'metadata': {
-                        'created_at': image.created_at.isoformat() if image.created_at else None,
-                        'updated_at': image.updated_at.isoformat() if image.updated_at else None
+                        'created_at': image.created_at.isoformat() if image.created_at else None
                     }
                 }
                 portfolio_data.append(portfolio_item)
-                print(f"Added image: {image.filename} with categories: {image_categories}")
+                print(f"SIMPLE: Added image {image.filename}")
                 
             except Exception as img_error:
                 print(f"Error processing image {image.id}: {img_error}")
                 continue
         
-        print(f"Returning {len(portfolio_data)} portfolio items for React frontend")
+        print(f"SIMPLE QUERY: Returning {len(portfolio_data)} portfolio items")
         
         # Create response with CORS headers for React frontend
         response = jsonify(portfolio_data)
@@ -348,7 +336,7 @@ def get_portfolio_data():
         return response
         
     except Exception as e:
-        print(f"Error loading portfolio from database: {e}")
+        print(f"SIMPLE QUERY ERROR: {e}")
         import traceback
         traceback.print_exc()
         
