@@ -127,27 +127,25 @@ def serve_photography_assets(filename):
 def get_portfolio():
     """API endpoint to get portfolio data from SQL database"""
     try:
-        # Import models properly
+        # Import models properly - same as admin
         from src.models import Image, Category, ImageCategory, db
         
-        # Get all images with their categories using proper joins
-        images = db.session.query(Image).all()
+        # Use same query method as admin - Image.query.all()
+        images = Image.query.all()
         portfolio_data = []
         
         print(f"Found {len(images)} images in database")  # Debug log
         
         for image in images:
-            # Get categories for this image using proper relationship
-            categories = []
-            for image_category in image.image_categories:
-                categories.append(image_category.category.name)
+            # Get categories for this image - same as admin
+            image_categories = [cat.category.name for cat in image.categories]
             
             portfolio_item = {
                 'id': str(image.id),  # Convert UUID to string
                 'title': image.title or f"Image {image.id}",
                 'description': image.description or "",
                 'image': image.filename,  # Frontend expects 'image' field
-                'categories': categories,
+                'categories': image_categories,
                 'metadata': {
                     'created_at': image.created_at.isoformat() if image.created_at else None,
                     'updated_at': image.updated_at.isoformat() if image.updated_at else None
