@@ -82,6 +82,21 @@ with app.app_context():
     else:
         print(f"✅ System config exists - skipping initialization")
     
+    # Add slideshow column if it doesn't exist
+    try:
+        # Test if the column exists by trying to query it
+        db.session.execute(db.text("SELECT is_slideshow_background FROM images LIMIT 1"))
+        print("✅ Slideshow column already exists")
+    except Exception as e:
+        print("🔄 Adding slideshow column to images table...")
+        try:
+            db.session.execute(db.text("ALTER TABLE images ADD COLUMN is_slideshow_background BOOLEAN DEFAULT FALSE"))
+            db.session.commit()
+            print("✅ Slideshow column added successfully")
+        except Exception as alter_error:
+            print(f"❌ Failed to add slideshow column: {alter_error}")
+            db.session.rollback()
+    
     # Only migrate images if no images exist in database
     if Image.query.count() == 0:
         print("🔄 No images in database - running migration...")
