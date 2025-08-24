@@ -207,8 +207,7 @@ def admin_upload():
         if not title:
             return redirect(url_for('admin.admin_dashboard') + '?message=Please enter an image title&message_type=error')
         
-        if not description:
-            return redirect(url_for('admin.admin_dashboard') + '?message=Please enter a description&message_type=error')
+        # Description is now optional - no validation needed
         
         if not categories:
             return redirect(url_for('admin.admin_dashboard') + '?message=Please select at least one category&message_type=error')
