@@ -21,7 +21,7 @@ def get_slideshow_images():
                 'id': image.id,
                 'filename': image.filename,
                 'title': image.title,
-                'url': f'/static/assets/{image.filename}'
+                'url': f'https://minds-eye-master-production.up.railway.app/static/assets/{image.filename}'
             })
         
         return jsonify({
