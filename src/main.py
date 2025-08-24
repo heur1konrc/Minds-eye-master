@@ -23,7 +23,7 @@ from src.routes.backup_system import backup_system_bp
 from src.routes.og_image import og_bp
 from src.routes.cleanup_api import cleanup_bp
 from src.routes.about_management import about_mgmt_bp
-from src.routes.contact_form import contact_bp
+# from src.routes.contact_form import contact_bp  # Temporarily disabled
 
 # Import configuration
 from src.config import PHOTOGRAPHY_ASSETS_DIR
@@ -50,7 +50,7 @@ app.register_blueprint(backup_system_bp)
 app.register_blueprint(og_bp)
 app.register_blueprint(cleanup_bp)
 app.register_blueprint(about_mgmt_bp)
-app.register_blueprint(contact_bp)
+# app.register_blueprint(contact_bp)  # Temporarily disabled
 
 # Database configuration - Use persistent volume for database
 database_path = os.path.join(PHOTOGRAPHY_ASSETS_DIR, 'mindseye.db')
