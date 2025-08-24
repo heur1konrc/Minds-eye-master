@@ -494,6 +494,9 @@ def add_category():
     try:
         from ..models import Category, db
         
+        # Ensure database tables exist
+        db.create_all()
+        
         category_name = request.form.get('category_name', '').strip()
         print(f"=== ADD CATEGORY REQUEST ===")
         print(f"Category name: '{category_name}'")
@@ -513,7 +516,12 @@ def add_category():
                                   message_type='error'))
         
         # Create new category in database
-        new_category = Category(name=category_name)
+        new_category = Category(
+            name=category_name,
+            display_name=category_name,  # Set display_name as well
+            color='#ff6b35',  # Default color
+            display_order=0
+        )
         db.session.add(new_category)
         db.session.commit()
         
@@ -528,7 +536,7 @@ def add_category():
         import traceback
         traceback.print_exc()
         return redirect(url_for('category_mgmt.category_management', 
-                              message='Server error occurred', 
+                              message=f'Server error: {str(e)}', 
                               message_type='error'))
 
 @category_mgmt_bp.route('/admin/category-management/rename', methods=['POST'])
