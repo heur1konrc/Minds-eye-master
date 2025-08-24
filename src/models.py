@@ -28,6 +28,7 @@ class Image(db.Model):
     height = db.Column(db.Integer)
     is_featured = db.Column(db.Boolean, default=False)
     is_background = db.Column(db.Boolean, default=False)
+    is_slideshow_background = db.Column(db.Boolean, default=False)  # New field for slideshow
     featured_story = db.Column(db.Text)
     display_order = db.Column(db.Integer, default=0)
     

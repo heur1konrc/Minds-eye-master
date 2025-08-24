@@ -23,7 +23,7 @@ from src.routes.backup_system import backup_system_bp
 from src.routes.og_image import og_bp
 from src.routes.cleanup_api import cleanup_bp
 from src.routes.about_management import about_mgmt_bp
-# from src.routes.slideshow_api import slideshow_bp  # Temporarily disabled for deployment fix
+from src.routes.slideshow_api import slideshow_api_bp  # Simple slideshow API (Option 1)
 from src.routes.enhanced_background import enhanced_bg_bp
 # from src.routes.slideshow_manager import slideshow_bp as slideshow_manager_bp  # Temporarily disabled for deployment fix
 # from src.routes.contact_form import contact_bp  # Temporarily disabled
@@ -53,7 +53,7 @@ app.register_blueprint(backup_system_bp)
 app.register_blueprint(og_bp)
 app.register_blueprint(cleanup_bp)
 app.register_blueprint(about_mgmt_bp)
-# app.register_blueprint(slideshow_bp)  # Temporarily disabled for deployment fix
+app.register_blueprint(slideshow_api_bp)  # Simple slideshow API (Option 1)
 app.register_blueprint(enhanced_bg_bp)
 # app.register_blueprint(slideshow_manager_bp)  # Temporarily disabled for deployment fix
 # app.register_blueprint(contact_bp)  # Temporarily disabled

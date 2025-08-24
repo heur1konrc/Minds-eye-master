@@ -666,6 +666,25 @@ dashboard_html = '''
         .edit-btn:hover { 
             background: #45a049; 
         }
+        .slideshow-btn {
+            background: #666;
+            color: #fff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .slideshow-btn:hover {
+            background: #777;
+        }
+        .slideshow-btn.active {
+            background: #ff6b35;
+            color: #fff;
+        }
+        .slideshow-btn.active:hover {
+            background: #e55a2b;
+        }
         .message { 
             padding: 15px; 
             border-radius: 5px; 
@@ -724,7 +743,7 @@ dashboard_html = '''
     </div>
     
     <div class="admin-links">
-        <a href="/admin/slideshow-manager">🎬 Slideshow Background</a>
+        <a href="/admin/portfolio-management">🖼️ Portfolio Management (includes slideshow selection)</a>
         <a href="/admin/featured-image">⭐ Featured Image</a>
         <a href="/admin/about-management">📝 About Content & Images</a>
         <a href="/admin/category-management">🏷️ Category Management</a>
@@ -823,8 +842,11 @@ dashboard_html = '''
                         <span class="category-badge">{{ category }}</span>
                         {% endfor %}
                     </div>
-                    <div style="margin-top: 10px; display: flex; gap: 10px;">
+                    <div style="margin-top: 10px; display: flex; gap: 10px; flex-wrap: wrap;">
                         <button type="button" class="edit-btn" onclick="openEditModal('{{ item.id }}', '{{ item.title|replace("'", "\\'") }}', '{{ item.description|replace("'", "\\'") }}')">Edit</button>
+                        <button type="button" class="slideshow-btn {{ 'active' if item.is_slideshow_background else '' }}" onclick="toggleSlideshow('{{ item.id }}', {{ 'true' if item.is_slideshow_background else 'false' }})">
+                            {{ '★ In Slideshow' if item.is_slideshow_background else '☆ Add to Slideshow' }}
+                        </button>
                         <form method="POST" action="/admin/delete" style="display: inline;">
                             <input type="hidden" name="image_id" value="{{ item.id }}">
                             <button type="submit" class="delete-btn" onclick="return confirm('Delete this image?')">Delete</button>
@@ -971,6 +993,34 @@ dashboard_html = '''
             const modal = document.getElementById('editModal');
             if (event.target == modal) {
                 closeEditModal();
+            }
+        }
+        
+        // Slideshow toggle functionality
+        async function toggleSlideshow(imageId, currentStatus) {
+            try {
+                const response = await fetch('/admin/slideshow-toggle', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        image_id: imageId,
+                        is_slideshow: !currentStatus
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Reload the page to update the button states
+                    location.reload();
+                } else {
+                    alert(result.message || 'Failed to update slideshow status');
+                }
+            } catch (error) {
+                console.error('Error toggling slideshow:', error);
+                alert('Error updating slideshow status');
             }
         }
     </script>
