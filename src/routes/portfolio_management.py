@@ -59,13 +59,33 @@ def save_portfolio_data(data):
 
 @portfolio_mgmt_bp.route('/admin/portfolio-management')
 def portfolio_management():
-    """Portfolio management admin interface"""
+    """Portfolio management admin interface - USING DATABASE"""
     if not session.get('admin_logged_in'):
         return redirect(url_for('admin.admin_login'))
     
-    portfolio_data = load_portfolio_data()
-    categories_config = load_categories_config()
-    available_categories = categories_config['categories']
+    # Load data from SQL database instead of JSON files
+    from ..models import Image, Category
+    
+    # Get all images from database
+    images = Image.query.all()
+    portfolio_data = []
+    
+    for image in images:
+        # Get categories for this image
+        image_categories = [cat.category.name for cat in image.categories]
+        
+        portfolio_data.append({
+            'id': image.id,
+            'filename': image.filename,
+            'title': image.title,
+            'description': image.description,
+            'categories': image_categories,
+            'is_slideshow_background': getattr(image, 'is_slideshow_background', False)
+        })
+    
+    # Get categories from database
+    categories = Category.query.all()
+    available_categories = [cat.name for cat in categories]
     
     admin_html = '''
     <!DOCTYPE html>

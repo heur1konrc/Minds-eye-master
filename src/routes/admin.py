@@ -453,6 +453,42 @@ def edit_image():
         print(f"Edit error: {e}")
         return redirect(url_for('admin.admin_dashboard') + f'?message=Update failed: {str(e)}&message_type=error')
 
+@admin_bp.route('/admin/slideshow-toggle', methods=['POST'])
+def slideshow_toggle():
+    """Toggle slideshow background status for an image"""
+    if not session.get('admin_logged_in'):
+        return jsonify({'success': False, 'message': 'Not authenticated'}), 401
+    
+    try:
+        from ..models import db, Image
+        
+        data = request.get_json()
+        image_id = data.get('image_id')
+        is_slideshow = data.get('is_slideshow', False)
+        
+        # Find the image
+        image = Image.query.get(image_id)
+        if not image:
+            return jsonify({'success': False, 'message': 'Image not found'}), 404
+        
+        # Check slideshow limit (max 5 images)
+        if is_slideshow:
+            current_slideshow_count = Image.query.filter_by(is_slideshow_background=True).count()
+            if current_slideshow_count >= 5:
+                return jsonify({'success': False, 'message': 'Maximum 5 images allowed in slideshow'}), 400
+        
+        # Update the image
+        image.is_slideshow_background = is_slideshow
+        db.session.commit()
+        
+        action = "added to" if is_slideshow else "removed from"
+        return jsonify({'success': True, 'message': f'Image {action} slideshow successfully'})
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"Slideshow toggle error: {e}")
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
 # Dashboard HTML template with dynamic categories and multi-image upload
 dashboard_html = '''
 <!DOCTYPE html>
