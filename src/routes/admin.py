@@ -174,7 +174,8 @@ def admin_dashboard():
             'upload_date': image.upload_date.isoformat() if image.upload_date else None,
             'file_size': image.file_size,
             'width': image.width,
-            'height': image.height
+            'height': image.height,
+            'is_slideshow_background': getattr(image, 'is_slideshow_background', False)
         })
     
     # Get categories from database
@@ -441,8 +442,9 @@ def edit_image():
             return redirect(url_for('admin.admin_dashboard') + '?message=Image not found&message_type=error')
         
         # Update the image details
-        image.title = title if title else image.title
-        image.description = description if description else image.description
+        if title:  # Only update title if provided
+            image.title = title
+        image.description = description  # Always update description (allow blank)
         
         db.session.commit()
         
@@ -779,7 +781,7 @@ dashboard_html = '''
     </div>
     
     <div class="admin-links">
-        <a href="/admin/portfolio-management">🖼️ Portfolio Management (includes slideshow selection)</a>
+        <a href="/admin">🖼️ Portfolio Management</a>
         <a href="/admin/featured-image">⭐ Featured Image</a>
         <a href="/admin/about-management">📝 About Content & Images</a>
         <a href="/admin/category-management">🏷️ Category Management</a>
