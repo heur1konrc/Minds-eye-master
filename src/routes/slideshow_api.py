@@ -41,20 +41,29 @@ def get_slideshow_images():
 @slideshow_api_bp.route('/admin/slideshow-toggle', methods=['POST'])
 def toggle_slideshow_image():
     """Toggle slideshow status for an image"""
+    print(f"🔍 Slideshow toggle called - Session: {session.get('admin_logged_in')}")
+    
     if not session.get('admin_logged_in'):
+        print("❌ Not authenticated")
         return jsonify({'success': False, 'message': 'Not authenticated'}), 401
     
     try:
         data = request.get_json()
+        print(f"🔍 Request data: {data}")
+        
         image_id = data.get('image_id')
         is_slideshow = data.get('is_slideshow', False)
         
+        print(f"🔍 Parsed - image_id: {image_id}, is_slideshow: {is_slideshow}")
+        
         if not image_id:
+            print("❌ No image ID provided")
             return jsonify({'success': False, 'message': 'Image ID required'}), 400
         
         # Check current slideshow count if trying to add
         if is_slideshow:
             current_count = Image.query.filter_by(is_slideshow_background=True).count()
+            print(f"🔍 Current slideshow count: {current_count}")
             if current_count >= 5:
                 return jsonify({
                     'success': False, 
@@ -63,11 +72,15 @@ def toggle_slideshow_image():
         
         # Find and update the image
         image = Image.query.get(image_id)
+        print(f"🔍 Found image: {image}")
+        
         if not image:
+            print("❌ Image not found")
             return jsonify({'success': False, 'message': 'Image not found'}), 404
         
         image.is_slideshow_background = is_slideshow
         db.session.commit()
+        print(f"✅ Updated image slideshow status to: {is_slideshow}")
         
         action = 'added to' if is_slideshow else 'removed from'
         return jsonify({
@@ -77,9 +90,9 @@ def toggle_slideshow_image():
         
     except Exception as e:
         db.session.rollback()
-        print(f"Slideshow toggle error: {e}")
+        print(f"❌ Slideshow toggle error: {e}")
         return jsonify({
             'success': False,
-            'message': 'Server error occurred'
+            'message': f'Server error: {str(e)}'
         }), 500
 
