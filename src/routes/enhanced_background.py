@@ -8,7 +8,7 @@ import json
 from flask import Blueprint, request, render_template_string, redirect, url_for, session, flash, jsonify
 from werkzeug.utils import secure_filename
 import uuid
-from ..config import PHOTOGRAPHY_ASSETS_DIR, STATIC_ASSETS_DIR
+from ..config import PHOTOGRAPHY_ASSETS_DIR, LEGACY_ASSETS_DIR
 from ..models import db, Image, SlideshowBackground, SlideshowSettings
 
 enhanced_bg_bp = Blueprint('enhanced_background', __name__)
