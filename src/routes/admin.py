@@ -1036,6 +1036,7 @@ dashboard_html = '''
         
         // Slideshow toggle functionality
         async function toggleSlideshow(imageId, currentStatus) {
+            alert('Function called with imageId: ' + imageId + ', currentStatus: ' + currentStatus);
             try {
                 const response = await fetch('/admin/slideshow-toggle', {
                     method: 'POST',
