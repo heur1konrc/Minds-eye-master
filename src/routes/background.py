@@ -1,4 +1,4 @@
-from flas"""
+"""
 Enhanced Background Management with Slideshow Support
 Handles both single background and slideshow background management
 """
