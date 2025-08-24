@@ -88,8 +88,22 @@ def category_management():
     if not session.get('admin_logged_in'):
         return redirect(url_for('admin.admin_login'))
     
-    config = load_categories_config()
-    usage = get_category_usage()
+    # Get categories from database instead of JSON
+    from ..models import Category, Image, ImageCategory
+    
+    categories = Category.query.all()
+    
+    # Get usage counts from database
+    usage = {}
+    for category in categories:
+        count = ImageCategory.query.filter_by(category_id=category.id).count()
+        usage[category.name] = count
+    
+    # Create config structure for template compatibility
+    config = {
+        'categories': [cat.name for cat in categories],
+        'default_category': 'All'  # This could be made dynamic later
+    }
     
     admin_html = '''
     <!DOCTYPE html>
@@ -478,6 +492,8 @@ def add_category():
         return redirect(url_for('admin.admin_login'))
     
     try:
+        from ..models import Category, db
+        
         category_name = request.form.get('category_name', '').strip()
         print(f"=== ADD CATEGORY REQUEST ===")
         print(f"Category name: '{category_name}'")
@@ -488,32 +504,26 @@ def add_category():
                                   message='Category name is required', 
                                   message_type='error'))
         
-        config = load_categories_config()
-        print(f"Current config: {config}")
-        
-        if category_name in config['categories']:
+        # Check if category already exists in database
+        existing_category = Category.query.filter_by(name=category_name).first()
+        if existing_category:
             print(f"Error: Category '{category_name}' already exists")
             return redirect(url_for('category_mgmt.category_management', 
                                   message=f'Category "{category_name}" already exists', 
                                   message_type='error'))
         
-        # Add to categories list
-        config['categories'].append(category_name)
-        config['category_order'].append(category_name)
-        print(f"Updated config: {config}")
+        # Create new category in database
+        new_category = Category(name=category_name)
+        db.session.add(new_category)
+        db.session.commit()
         
-        if save_categories_config(config):
-            print(f"Category '{category_name}' added successfully")
-            return redirect(url_for('category_mgmt.category_management', 
-                                  message=f'Category "{category_name}" added successfully', 
-                                  message_type='success'))
-        else:
-            print(f"Failed to save category '{category_name}'")
-            return redirect(url_for('category_mgmt.category_management', 
-                                  message='Failed to save category', 
-                                  message_type='error'))
+        print(f"Category '{category_name}' added successfully to database")
+        return redirect(url_for('category_mgmt.category_management', 
+                              message=f'Category "{category_name}" added successfully', 
+                              message_type='success'))
             
     except Exception as e:
+        db.session.rollback()
         print(f"Add category error: {e}")
         import traceback
         traceback.print_exc()
@@ -528,6 +538,8 @@ def rename_category():
         return redirect(url_for('admin.admin_login'))
     
     try:
+        from ..models import Category, db
+        
         old_name = request.form.get('old_name', '').strip()
         new_name = request.form.get('new_name', '').strip()
         
@@ -541,60 +553,30 @@ def rename_category():
                                   message='New name must be different from old name', 
                                   message_type='error'))
         
-        config = load_categories_config()
-        
-        if old_name not in config['categories']:
+        # Find the category in database
+        category = Category.query.filter_by(name=old_name).first()
+        if not category:
             return redirect(url_for('category_mgmt.category_management', 
                                   message=f'Category "{old_name}" not found', 
                                   message_type='error'))
         
-        if new_name in config['categories']:
+        # Check if new name already exists
+        existing_category = Category.query.filter_by(name=new_name).first()
+        if existing_category:
             return redirect(url_for('category_mgmt.category_management', 
                                   message=f'Category "{new_name}" already exists', 
                                   message_type='error'))
         
-        # Update categories list
-        category_index = config['categories'].index(old_name)
-        config['categories'][category_index] = new_name
+        # Update the category name in database
+        category.name = new_name
+        db.session.commit()
         
-        # Update category order
-        if old_name in config['category_order']:
-            order_index = config['category_order'].index(old_name)
-            config['category_order'][order_index] = new_name
-        
-        # Update default category if it was the renamed one
-        if config['default_category'] == old_name:
-            config['default_category'] = new_name
-        
-        # Update all portfolio images
-        portfolio_data = load_portfolio_data()
-        updated_count = 0
-        
-        for item in portfolio_data:
-            categories = item.get('categories', [item.get('category', '')])
-            if isinstance(categories, str):
-                categories = [categories]
-            
-            # Update categories list
-            if old_name in categories:
-                new_categories = [new_name if cat == old_name else cat for cat in categories]
-                item['categories'] = new_categories
-                # Remove old single category field if it exists
-                if 'category' in item:
-                    del item['category']
-                updated_count += 1
-        
-        # Save both config and portfolio data
-        if save_categories_config(config) and save_portfolio_data(portfolio_data):
-            return redirect(url_for('category_mgmt.category_management', 
-                                  message=f'Category renamed from "{old_name}" to "{new_name}" ({updated_count} images updated)', 
-                                  message_type='success'))
-        else:
-            return redirect(url_for('category_mgmt.category_management', 
-                                  message='Failed to save changes', 
-                                  message_type='error'))
+        return redirect(url_for('category_mgmt.category_management', 
+                              message=f'Category renamed from "{old_name}" to "{new_name}"', 
+                              message_type='success'))
             
     except Exception as e:
+        db.session.rollback()
         print(f"Rename category error: {e}")
         return redirect(url_for('category_mgmt.category_management', 
                               message='Server error occurred', 
@@ -607,58 +589,36 @@ def delete_category():
         return jsonify({'success': False, 'message': 'Not authenticated'})
     
     try:
+        from ..models import Category, ImageCategory, db
+        
         data = request.get_json()
         category_name = data.get('category_name', '').strip()
         
         if not category_name:
             return jsonify({'success': False, 'message': 'Category name is required'})
         
-        config = load_categories_config()
-        
-        if category_name not in config['categories']:
+        # Find the category in database
+        category = Category.query.filter_by(name=category_name).first()
+        if not category:
             return jsonify({'success': False, 'message': f'Category "{category_name}" not found'})
         
-        # Don't allow deleting the default category
-        if config['default_category'] == category_name:
-            return jsonify({'success': False, 'message': 'Cannot delete the default category. Set a different default first.'})
+        # Check if category is being used by images
+        usage_count = ImageCategory.query.filter_by(category_id=category.id).count()
         
-        # Remove from categories list
-        config['categories'].remove(category_name)
+        # Delete all image-category relationships first
+        ImageCategory.query.filter_by(category_id=category.id).delete()
         
-        # Remove from category order
-        if category_name in config['category_order']:
-            config['category_order'].remove(category_name)
+        # Delete the category itself
+        db.session.delete(category)
+        db.session.commit()
         
-        # Remove from all portfolio images
-        portfolio_data = load_portfolio_data()
-        updated_count = 0
-        
-        for item in portfolio_data:
-            categories = item.get('categories', [item.get('category', '')])
-            if isinstance(categories, str):
-                categories = [categories]
-            
-            # Remove the deleted category
-            if category_name in categories:
-                new_categories = [cat for cat in categories if cat != category_name]
-                if new_categories:
-                    item['categories'] = new_categories
-                else:
-                    # If no categories left, assign to a default category
-                    item['categories'] = ['Miscellaneous']
-                
-                # Remove old single category field if it exists
-                if 'category' in item:
-                    del item['category']
-                updated_count += 1
-        
-        # Save both config and portfolio data
-        if save_categories_config(config) and save_portfolio_data(portfolio_data):
-            return jsonify({'success': True, 'message': f'Category "{category_name}" deleted ({updated_count} images updated)'})
-        else:
-            return jsonify({'success': False, 'message': 'Failed to save changes'})
+        return jsonify({
+            'success': True, 
+            'message': f'Category "{category_name}" deleted successfully. {usage_count} image associations removed.'
+        })
             
     except Exception as e:
+        db.session.rollback()
         print(f"Delete category error: {e}")
         return jsonify({'success': False, 'message': 'Server error occurred'})
 
