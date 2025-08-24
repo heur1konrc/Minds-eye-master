@@ -419,6 +419,40 @@ def admin_delete():
         print(f"Delete error: {e}")
         return redirect(url_for('admin.admin_dashboard') + f'?message=Delete failed: {str(e)}&message_type=error')
 
+@admin_bp.route('/admin/edit-image', methods=['POST'])
+def edit_image():
+    """Edit individual image title and description"""
+    if not session.get('admin_logged_in'):
+        return redirect(url_for('admin.admin_login'))
+    
+    try:
+        from ..models import Image, db
+        
+        image_id = request.form.get('image_id')
+        title = request.form.get('title', '').strip()
+        description = request.form.get('description', '').strip()
+        
+        if not image_id:
+            return redirect(url_for('admin.admin_dashboard') + '?message=No image ID provided&message_type=error')
+        
+        # Find the image in the database
+        image = Image.query.get(image_id)
+        if not image:
+            return redirect(url_for('admin.admin_dashboard') + '?message=Image not found&message_type=error')
+        
+        # Update the image details
+        image.title = title if title else image.title
+        image.description = description if description else image.description
+        
+        db.session.commit()
+        
+        return redirect(url_for('admin.admin_dashboard') + '?message=Image updated successfully!&message_type=success')
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"Edit error: {e}")
+        return redirect(url_for('admin.admin_dashboard') + f'?message=Update failed: {str(e)}&message_type=error')
+
 # Dashboard HTML template with dynamic categories and multi-image upload
 dashboard_html = '''
 <!DOCTYPE html>
@@ -621,6 +655,17 @@ dashboard_html = '''
             border-radius: 4px; 
             cursor: pointer; 
         }
+        .edit-btn { 
+            background: #4CAF50; 
+            color: #fff; 
+            border: none; 
+            padding: 8px 16px; 
+            border-radius: 4px; 
+            cursor: pointer; 
+        }
+        .edit-btn:hover { 
+            background: #45a049; 
+        }
         .message { 
             padding: 15px; 
             border-radius: 5px; 
@@ -778,13 +823,41 @@ dashboard_html = '''
                         <span class="category-badge">{{ category }}</span>
                         {% endfor %}
                     </div>
-                    <form method="POST" action="/admin/delete" style="margin-top: 10px;">
-                        <input type="hidden" name="image_id" value="{{ item.id }}">
-                        <button type="submit" class="delete-btn" onclick="return confirm('Delete this image?')">Delete</button>
-                    </form>
+                    <div style="margin-top: 10px; display: flex; gap: 10px;">
+                        <button type="button" class="edit-btn" onclick="openEditModal('{{ item.id }}', '{{ item.title|replace("'", "\\'") }}', '{{ item.description|replace("'", "\\'") }}')">Edit</button>
+                        <form method="POST" action="/admin/delete" style="display: inline;">
+                            <input type="hidden" name="image_id" value="{{ item.id }}">
+                            <button type="submit" class="delete-btn" onclick="return confirm('Delete this image?')">Delete</button>
+                        </form>
+                    </div>
                 </div>
             </div>
             {% endfor %}
+        </div>
+    </div>
+    
+    <!-- Edit Modal -->
+    <div id="editModal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
+        <div style="background-color: #2a2a2a; margin: 10% auto; padding: 20px; border-radius: 8px; width: 500px; max-width: 90%;">
+            <h3 style="color: #ff6b35; margin-top: 0;">Edit Image Details</h3>
+            <form id="editForm" method="POST" action="/admin/edit-image">
+                <input type="hidden" id="editImageId" name="image_id">
+                
+                <div style="margin-bottom: 15px;">
+                    <label for="editTitle" style="display: block; color: #fff; margin-bottom: 5px;">Title:</label>
+                    <input type="text" id="editTitle" name="title" style="width: 100%; padding: 8px; border: 1px solid #555; background: #333; color: #fff; border-radius: 4px;">
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                    <label for="editDescription" style="display: block; color: #fff; margin-bottom: 5px;">Description:</label>
+                    <textarea id="editDescription" name="description" rows="4" style="width: 100%; padding: 8px; border: 1px solid #555; background: #333; color: #fff; border-radius: 4px; resize: vertical;"></textarea>
+                </div>
+                
+                <div style="text-align: right;">
+                    <button type="button" onclick="closeEditModal()" style="background: #666; color: #fff; border: none; padding: 8px 16px; border-radius: 4px; margin-right: 10px; cursor: pointer;">Cancel</button>
+                    <button type="submit" style="background: #4CAF50; color: #fff; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">Save Changes</button>
+                </div>
+            </form>
         </div>
     </div>
     
@@ -880,6 +953,25 @@ dashboard_html = '''
             
             document.body.appendChild(form);
             form.submit();
+        }
+        
+        function openEditModal(imageId, title, description) {
+            document.getElementById('editImageId').value = imageId;
+            document.getElementById('editTitle').value = title;
+            document.getElementById('editDescription').value = description;
+            document.getElementById('editModal').style.display = 'block';
+        }
+        
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+        }
+        
+        // Close modal when clicking outside of it
+        window.onclick = function(event) {
+            const modal = document.getElementById('editModal');
+            if (event.target == modal) {
+                closeEditModal();
+            }
         }
     </script>
 </body>
