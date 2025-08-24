@@ -384,32 +384,40 @@ def bulk_update_categories():
 
 @admin_bp.route('/admin/delete', methods=['POST'])
 def admin_delete():
-    """Delete image"""
+    """Delete individual image"""
     if not session.get('admin_logged_in'):
         return redirect(url_for('admin.admin_login'))
     
     try:
-        image_id = request.form.get('image_id')
-        portfolio_data = load_portfolio_data()
+        from ..models import Image, ImageCategory, db
         
-        # Find and remove the image
-        for i, item in enumerate(portfolio_data):
-            if item.get('id') == image_id:
-                # Delete the image file from photography assets directory
-                image_path = os.path.join(PHOTOGRAPHY_ASSETS_DIR, item.get('image', ''))
-                if os.path.exists(image_path):
-                    os.remove(image_path)
-                
-                # Remove from portfolio data
-                portfolio_data.pop(i)
-                save_portfolio_data(portfolio_data)
-                break
+        image_id = request.form.get('image_id')
+        if not image_id:
+            return redirect(url_for('admin.admin_dashboard') + '?message=No image ID provided&message_type=error')
+        
+        # Find the image in the database
+        image = Image.query.get(image_id)
+        if not image:
+            return redirect(url_for('admin.admin_dashboard') + '?message=Image not found&message_type=error')
+        
+        # Delete the image file from photography assets directory
+        image_path = os.path.join(PHOTOGRAPHY_ASSETS_DIR, image.filename)
+        if os.path.exists(image_path):
+            os.remove(image_path)
+        
+        # Delete associated category relationships
+        ImageCategory.query.filter_by(image_id=image_id).delete()
+        
+        # Delete the image record from database
+        db.session.delete(image)
+        db.session.commit()
         
         return redirect(url_for('admin.admin_dashboard') + '?message=Image deleted successfully!&message_type=success')
         
     except Exception as e:
+        db.session.rollback()
         print(f"Delete error: {e}")
-        return redirect(url_for('admin.admin_dashboard') + '?message=Delete failed&message_type=error')
+        return redirect(url_for('admin.admin_dashboard') + f'?message=Delete failed: {str(e)}&message_type=error')
 
 # Dashboard HTML template with dynamic categories and multi-image upload
 dashboard_html = '''
