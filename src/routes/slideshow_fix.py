@@ -60,9 +60,9 @@ def toggle_slideshow_new():
     
     # Step 5: Check field exists using raw SQL
     try:
-        # Test if field exists
+        # Test if field exists (use correct table name 'images')
         result = db.session.execute(
-            text("SELECT id, is_slideshow_background FROM image WHERE id = :image_id LIMIT 1"),
+            text("SELECT id, is_slideshow_background FROM images WHERE id = :image_id LIMIT 1"),
             {'image_id': image_id}
         ).fetchone()
         
@@ -72,10 +72,10 @@ def toggle_slideshow_new():
         current_status = result[1] if result[1] is not None else False
         
     except Exception as e:
-        # Field might not exist, try to add it
+        # Field might not exist, try to add it (use correct table name 'images')
         try:
             db.session.execute(
-                text("ALTER TABLE image ADD COLUMN is_slideshow_background BOOLEAN DEFAULT FALSE")
+                text("ALTER TABLE images ADD COLUMN is_slideshow_background BOOLEAN DEFAULT FALSE")
             )
             db.session.commit()
             current_status = False
@@ -86,10 +86,10 @@ def toggle_slideshow_new():
                 'step': 'field_check'
             }), 500
     
-    # Step 6: Update using raw SQL
+    # Step 6: Update using raw SQL (use correct table name 'images')
     try:
         db.session.execute(
-            text("UPDATE image SET is_slideshow_background = :status WHERE id = :image_id"),
+            text("UPDATE images SET is_slideshow_background = :status WHERE id = :image_id"),
             {'status': is_slideshow, 'image_id': image_id}
         )
         db.session.commit()
@@ -98,10 +98,10 @@ def toggle_slideshow_new():
         db.session.rollback()
         return jsonify({'success': False, 'error': f'Update failed: {str(e)}', 'step': 'update'}), 500
     
-    # Step 7: Get updated count
+    # Step 7: Get updated count (use correct table name 'images')
     try:
         count_result = db.session.execute(
-            text("SELECT COUNT(*) FROM image WHERE is_slideshow_background = TRUE")
+            text("SELECT COUNT(*) FROM images WHERE is_slideshow_background = TRUE")
         ).fetchone()
         slideshow_count = count_result[0] if count_result else 0
         
@@ -126,25 +126,25 @@ def slideshow_debug():
         if not session.get('admin_logged_in'):
             return jsonify({'error': 'Not authenticated'}), 401
         
-        # Check table structure
+        # Check table structure (use correct table name 'images')
         try:
-            columns = db.session.execute(text("PRAGMA table_info(image)")).fetchall()
+            columns = db.session.execute(text("PRAGMA table_info(images)")).fetchall()
             column_info = [{'name': col[1], 'type': col[2], 'nullable': not col[3]} for col in columns]
         except:
             column_info = "Could not get column info"
         
-        # Count slideshow images
+        # Count slideshow images (use correct table name 'images')
         try:
             slideshow_count = db.session.execute(
-                text("SELECT COUNT(*) FROM image WHERE is_slideshow_background = TRUE")
+                text("SELECT COUNT(*) FROM images WHERE is_slideshow_background = TRUE")
             ).fetchone()[0]
         except Exception as e:
             slideshow_count = f"Error: {str(e)}"
         
-        # List all images
+        # List all images (use correct table name 'images')
         try:
             all_images = db.session.execute(
-                text("SELECT id, title, is_slideshow_background FROM image ORDER BY id")
+                text("SELECT id, title, is_slideshow_background FROM images ORDER BY id")
             ).fetchall()
             image_list = [{'id': img[0], 'title': img[1], 'slideshow': img[2]} for img in all_images]
         except Exception as e:
