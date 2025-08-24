@@ -23,6 +23,7 @@ from src.routes.backup_system import backup_system_bp
 from src.routes.og_image import og_bp
 from src.routes.cleanup_api import cleanup_bp
 from src.routes.about_management import about_mgmt_bp
+from src.routes.contact_form import contact_bp
 
 # Import configuration
 from src.config import PHOTOGRAPHY_ASSETS_DIR
@@ -49,6 +50,7 @@ app.register_blueprint(backup_system_bp)
 app.register_blueprint(og_bp)
 app.register_blueprint(cleanup_bp)
 app.register_blueprint(about_mgmt_bp)
+app.register_blueprint(contact_bp)
 
 # Database configuration - Use persistent volume for database
 database_path = os.path.join(PHOTOGRAPHY_ASSETS_DIR, 'mindseye.db')
@@ -82,6 +84,12 @@ with app.app_context():
         print(f"✅ Database has {Image.query.count()} images - skipping migration")
     
     print("✅ SQL Database initialization complete")
+
+@app.route('/assets/about/<filename>')
+def serve_about_image(filename):
+    """Serve about images from the about directory"""
+    about_dir = os.path.join(PHOTOGRAPHY_ASSETS_DIR, 'about')
+    return send_from_directory(about_dir, filename)
 
 @app.route('/debug/database-info')
 def debug_database_info():

@@ -291,42 +291,40 @@ def bulk_delete():
         return redirect(url_for('admin.admin_login'))
     
     try:
+        from ..models import Image, ImageCategory, db
+        
         # Get list of image IDs to delete
         image_ids = request.form.getlist('image_ids')
         
         if not image_ids:
-            flash('No images selected for deletion.', 'error')
-            return redirect(url_for('admin.admin_dashboard'))
+            return redirect(url_for('admin.admin_dashboard') + '?message=No images selected for deletion&message_type=error')
         
-        # Load current portfolio data
-        portfolio_data = load_portfolio_data()
+        deleted_count = 0
         
-        # Track deleted images for cleanup
-        deleted_images = []
+        # Delete each image from database and filesystem
+        for image_id in image_ids:
+            image = Image.query.get(image_id)
+            if image:
+                # Delete image file from filesystem
+                image_path = os.path.join(PHOTOGRAPHY_ASSETS_DIR, image.filename)
+                if os.path.exists(image_path):
+                    try:
+                        os.remove(image_path)
+                        print(f"✅ Deleted image file: {image_path}")
+                    except Exception as e:
+                        print(f"❌ Error deleting image file {image_path}: {e}")
+                
+                # Delete image categories relationships
+                ImageCategory.query.filter_by(image_id=image_id).delete()
+                
+                # Delete image from database
+                db.session.delete(image)
+                deleted_count += 1
         
-        # Remove selected images from portfolio data
-        updated_portfolio = []
-        for item in portfolio_data:
-            if item.get('id') in image_ids:
-                deleted_images.append(item)
-            else:
-                updated_portfolio.append(item)
+        # Commit all changes
+        db.session.commit()
         
-        # Delete image files from filesystem
-        for item in deleted_images:
-            image_path = os.path.join(PHOTOGRAPHY_ASSETS_DIR, item.get('image', ''))
-            if os.path.exists(image_path):
-                try:
-                    os.remove(image_path)
-                    print(f"✅ Deleted image file: {image_path}")
-                except Exception as e:
-                    print(f"❌ Error deleting image file {image_path}: {e}")
-        
-        # Save updated portfolio data
-        save_portfolio_data(updated_portfolio)
-        
-        flash(f'{len(deleted_images)} image(s) deleted successfully!', 'success')
-        return redirect(url_for('admin.admin_dashboard'))
+        return redirect(url_for('admin.admin_dashboard') + f'?message={deleted_count} image(s) deleted successfully!&message_type=success')
         
     except Exception as e:
         print(f"Bulk delete error: {e}")
@@ -707,7 +705,7 @@ dashboard_html = '''
             
             <div class="form-group">
                 <label for="description">Description</label>
-                <textarea id="description" name="description" rows="3" placeholder="Brief description (applies to all uploaded images)" required></textarea>
+                <textarea id="description" name="description" rows="3" placeholder="Brief description (applies to all uploaded images - optional)"></textarea>
             </div>
             
             <div class="form-group">
