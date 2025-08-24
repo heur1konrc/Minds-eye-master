@@ -40,7 +40,9 @@ def toggle_slideshow_new():
     
     # Step 3: Convert data types
     try:
-        image_id = int(image_id)
+        # Don't convert image_id to int - it's a UUID string
+        # image_id = int(image_id)  # This was causing the error!
+        
         if isinstance(is_slideshow, str):
             is_slideshow = is_slideshow.lower() in ('true', '1', 'yes')
         else:
