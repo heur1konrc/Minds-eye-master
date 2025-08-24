@@ -58,7 +58,25 @@ def toggle_slideshow_new():
     except Exception as e:
         return jsonify({'success': False, 'error': f'Image lookup failed: {str(e)}', 'step': 'find'}), 500
     
-    # Step 5: Check field exists using raw SQL
+    # Step 5: Check slideshow limit if adding image
+    if is_slideshow:
+        try:
+            current_count = db.session.execute(
+                text("SELECT COUNT(*) FROM images WHERE is_slideshow_background = TRUE")
+            ).fetchone()[0]
+            
+            if current_count >= 5:
+                return jsonify({
+                    'success': False, 
+                    'error': f'Slideshow limit reached! You already have {current_count} images in slideshow. Maximum is 5. Please remove an image first.',
+                    'step': 'limit_check'
+                }), 400
+                
+        except Exception as e:
+            # If count fails, continue anyway
+            pass
+    
+    # Step 6: Check field exists using raw SQL
     try:
         # Test if field exists (use correct table name 'images')
         result = db.session.execute(
