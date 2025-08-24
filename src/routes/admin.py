@@ -1037,7 +1037,7 @@ dashboard_html = '''
         // Slideshow toggle functionality
         async function toggleSlideshow(imageId, currentStatus) {
             try {
-                const response = await fetch('/admin/slideshow-toggle', {
+                const response = await fetch('/admin/slideshow-toggle-new', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -1050,16 +1050,18 @@ dashboard_html = '''
                 
                 // Check if the HTTP response is ok first
                 if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                    const errorData = await response.json();
+                    throw new Error(`HTTP error! status: ${response.status}, step: ${errorData.step || 'unknown'}, error: ${errorData.error || 'Unknown error'}`);
                 }
                 
                 const result = await response.json();
                 
                 if (result.success) {
+                    alert(`Success: ${result.message} (Step: ${result.step})`);
                     // Reload the page to update the button states
                     location.reload();
                 } else {
-                    alert(result.message || 'Failed to update slideshow status');
+                    alert(`Error: ${result.error} (Step: ${result.step || 'unknown'})`);
                 }
             } catch (error) {
                 console.error('Error toggling slideshow:', error);
