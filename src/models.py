@@ -409,3 +409,58 @@ class AboutImage(db.Model):
         """Get the URL for this about image"""
         return f'/assets/about/{self.filename}'
 
+
+
+class SlideshowBackground(db.Model):
+    """Slideshow background images model"""
+    __tablename__ = 'slideshow_background'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    image_id = db.Column(db.String(36), db.ForeignKey('images.id'), nullable=False)
+    display_order = db.Column(db.Integer, default=0)
+    is_active = db.Column(db.Boolean, default=True)
+    created_date = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relationship to Image
+    image = db.relationship('Image', backref='slideshow_backgrounds')
+    
+    def __repr__(self):
+        return f'<SlideshowBackground {self.image_id}>'
+    
+    def to_dict(self):
+        """Convert to dictionary for JSON serialization"""
+        return {
+            'id': self.id,
+            'image_id': self.image_id,
+            'filename': self.image.filename if self.image else None,
+            'title': self.image.title if self.image else None,
+            'display_order': self.display_order,
+            'is_active': self.is_active,
+            'created_date': self.created_date.isoformat() if self.created_date else None
+        }
+
+class SlideshowSettings(db.Model):
+    """Slideshow configuration settings"""
+    __tablename__ = 'slideshow_settings'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    transition_duration = db.Column(db.Integer, default=5000)  # milliseconds
+    fade_duration = db.Column(db.Integer, default=1000)  # milliseconds
+    auto_play = db.Column(db.Boolean, default=True)
+    pause_on_hover = db.Column(db.Boolean, default=True)
+    last_updated = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def __repr__(self):
+        return f'<SlideshowSettings {self.id}>'
+    
+    def to_dict(self):
+        """Convert to dictionary for JSON serialization"""
+        return {
+            'id': self.id,
+            'transition_duration': self.transition_duration,
+            'fade_duration': self.fade_duration,
+            'auto_play': self.auto_play,
+            'pause_on_hover': self.pause_on_hover,
+            'last_updated': self.last_updated.isoformat() if self.last_updated else None
+        }
+

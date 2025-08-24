@@ -1,7 +1,11 @@
-from flask import Blueprint, request, redirect, url_for, session, render_template_string, jsonify
+from flas"""
+Enhanced Background Management with Slideshow Support
+Handles both single background and slideshow background management
+"""
+
 import os
 import json
-from flask import Blueprint, request, render_template_string, redirect, url_for, session, flash
+from flask import Blueprint, request, render_template_string, redirect, url_for, session, flash, jsonify
 from werkzeug.utils import secure_filename
 import uuid
 from ..config import PHOTOGRAPHY_ASSETS_DIR, PORTFOLIO_DATA_FILE, LEGACY_ASSETS_DIR
@@ -25,6 +29,19 @@ def get_current_background():
     except:
         return None
 
+def get_slideshow_backgrounds():
+    """Get all slideshow background images"""
+    try:
+        from ..models import SlideshowBackground, Image
+        backgrounds = SlideshowBackground.query.join(Image)\
+            .filter(SlideshowBackground.is_active == True)\
+            .order_by(SlideshowBackground.display_order)\
+            .all()
+        
+        return [bg.image for bg in backgrounds if bg.image]
+    except:
+        return []
+
 def set_background_image(filename):
     """Set the current background image"""
     config = {'background_image': filename}
@@ -47,7 +64,7 @@ def load_portfolio_data():
             
             portfolio_data.append({
                 'id': image.id,
-                'image': image.filename,  # Background manager expects 'image' field
+                'image': image.filename,  # Background manager expects 'image' fieldd
                 'title': image.title,
                 'description': image.description,
                 'categories': image_categories,

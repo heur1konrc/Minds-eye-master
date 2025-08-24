@@ -671,7 +671,7 @@ dashboard_html = '''
     </div>
     
     <div class="admin-links">
-        <a href="/admin/background">🖼️ Background Management</a>
+        <a href="/admin/slideshow-manager">🎬 Slideshow Background</a>
         <a href="/admin/featured-image">⭐ Featured Image</a>
         <a href="/admin/about-management">📝 About Content & Images</a>
         <a href="/admin/category-management">🏷️ Category Management</a>
