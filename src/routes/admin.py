@@ -1048,6 +1048,11 @@ dashboard_html = '''
                     })
                 });
                 
+                // Check if the HTTP response is ok first
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
                 const result = await response.json();
                 
                 if (result.success) {
@@ -1058,7 +1063,7 @@ dashboard_html = '''
                 }
             } catch (error) {
                 console.error('Error toggling slideshow:', error);
-                alert('Error updating slideshow status');
+                alert('Error updating slideshow status: ' + error.message);
             }
         }
     </script>
