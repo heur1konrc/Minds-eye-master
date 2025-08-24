@@ -9,7 +9,7 @@ from email.mime.multipart import MIMEMultipart
 from flask import Blueprint, request, jsonify
 from datetime import datetime
 
-contact_bp = Blueprint('contact', __name__)
+contact_bp = Blueprint('contact_form', __name__)
 
 # Google SMTP Configuration
 SMTP_SERVER = 'smtp.gmail.com'
