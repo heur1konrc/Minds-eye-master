@@ -6,8 +6,16 @@ const CopyrightProtection = () => {
     const handleContextMenu = (e) => {
       // Only show dialog for images
       if (e.target.tagName === 'IMG') {
+        // Check if this is the featured image in fullscreen modal (allow right-click)
+        const isFullscreenModal = e.target.closest('.fixed.inset-0.bg-black.bg-opacity-95');
+        if (isFullscreenModal) {
+          // Allow right-click on featured image in fullscreen
+          return true;
+        }
+        
+        // Block right-click on all other images and show copyright message
         e.preventDefault();
-        alert('Copyright Mind\'s Eye Photography 2025\nUse contact form to find purchase options.');
+        alert('Copyright Mind\'s Eye Photography 2025\nUse contact form for license options');
         return false;
       }
     };
@@ -17,24 +25,40 @@ const CopyrightProtection = () => {
       // Only block Ctrl+S (Save Page) to prevent saving images
       if (e.ctrlKey && e.key === 's') {
         e.preventDefault();
-        alert('Copyright Mind\'s Eye Photography 2025\nUse contact form to find purchase options.');
+        alert('Copyright Mind\'s Eye Photography 2025\nUse contact form for license options');
         return false;
       }
       
       // Allow all other keyboard shortcuts for normal browsing
     };
 
-    // Disable drag and drop on images
+    // Disable drag and drop on images (except featured image in fullscreen)
     const handleDragStart = (e) => {
       if (e.target.tagName === 'IMG') {
+        // Check if this is the featured image in fullscreen modal
+        const isFullscreenModal = e.target.closest('.fixed.inset-0.bg-black.bg-opacity-95');
+        if (isFullscreenModal) {
+          // Allow drag on featured image in fullscreen
+          return true;
+        }
+        
+        // Block drag on all other images
         e.preventDefault();
         return false;
       }
     };
 
-    // Disable text selection on images
+    // Disable text selection on images (except featured image in fullscreen)
     const handleSelectStart = (e) => {
       if (e.target.tagName === 'IMG') {
+        // Check if this is the featured image in fullscreen modal
+        const isFullscreenModal = e.target.closest('.fixed.inset-0.bg-black.bg-opacity-95');
+        if (isFullscreenModal) {
+          // Allow selection on featured image in fullscreen
+          return true;
+        }
+        
+        // Block selection on all other images
         e.preventDefault();
         return false;
       }
@@ -46,7 +70,7 @@ const CopyrightProtection = () => {
     document.addEventListener('dragstart', handleDragStart);
     document.addEventListener('selectstart', handleSelectStart);
 
-    // Add CSS to prevent image selection and dragging
+    // Add CSS to prevent image selection and dragging (except for fullscreen modal)
     const style = document.createElement('style');
     style.textContent = `
       img {
@@ -62,19 +86,44 @@ const CopyrightProtection = () => {
         pointer-events: auto !important;
       }
       
-      /* Disable long-press on mobile */
+      /* Allow selection and drag for featured image in fullscreen modal */
+      .fixed.inset-0.bg-black.bg-opacity-95 img {
+        -webkit-user-select: auto !important;
+        -moz-user-select: auto !important;
+        -ms-user-select: auto !important;
+        user-select: auto !important;
+        -webkit-user-drag: auto !important;
+        -khtml-user-drag: auto !important;
+        -moz-user-drag: auto !important;
+        -o-user-drag: auto !important;
+        user-drag: auto !important;
+      }
+      
+      /* Disable long-press on mobile (except fullscreen) */
       img {
         -webkit-touch-callout: none !important;
         -webkit-tap-highlight-color: transparent !important;
       }
       
-      /* Prevent image highlighting */
+      .fixed.inset-0.bg-black.bg-opacity-95 img {
+        -webkit-touch-callout: default !important;
+      }
+      
+      /* Prevent image highlighting (except fullscreen) */
       img::selection {
         background: transparent !important;
       }
       
       img::-moz-selection {
         background: transparent !important;
+      }
+      
+      .fixed.inset-0.bg-black.bg-opacity-95 img::selection {
+        background: rgba(255, 255, 255, 0.3) !important;
+      }
+      
+      .fixed.inset-0.bg-black.bg-opacity-95 img::-moz-selection {
+        background: rgba(255, 255, 255, 0.3) !important;
       }
     `;
     document.head.appendChild(style);
