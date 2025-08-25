@@ -583,6 +583,18 @@ def get_current_background_api():
         }), 500
 
 
+# Flask About Page with Floating Layout (bypassing React cache issues)
+@app.route('/about-floating')
+def about_floating():
+    """Serve Flask-based About page with floating image layout"""
+    from flask import render_template
+    from src.models import Image
+    
+    # Get about images
+    about_images = Image.query.filter_by(category='about').all()
+    
+    return render_template('about_floating.html', about_images=about_images)
+
 # React Frontend Routes
 @app.route('/assets/<path:filename>')
 def serve_react_assets(filename):
