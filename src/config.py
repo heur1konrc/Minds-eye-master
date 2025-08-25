@@ -4,7 +4,7 @@ Centralizes asset directory paths for easy management
 """
 import os
 
-# Base directories
+# Base directories here
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 STATIC_DIR = os.path.join(BASE_DIR, 'src', 'static')
 
