@@ -254,6 +254,8 @@ def get_featured_image():
         traceback.print_exc()
         return jsonify({'image': None}), 500
 
+
+
 @app.route('/api/test')
 def api_test():
     """Simple test API endpoint without database queries"""
@@ -535,6 +537,35 @@ def serve(path):
         else:
             return "index.html not found", 404
 
+
+# React Frontend Routes
+@app.route('/')
+def serve_react_root():
+    """Serve React frontend for root route"""
+    frontend_dist = os.path.join(os.path.dirname(__file__), '..', 'frontend', 'dist')
+    return send_from_directory(frontend_dist, 'index.html')
+
+@app.route('/<path:path>')
+def serve_react_app(path):
+    """Serve React frontend for all non-API routes"""
+    if path.startswith('api/') or path.startswith('admin/') or path.startswith('static/'):
+        # Let Flask handle API and admin routes normally
+        return app.send_static_file('index.html')
+    
+    # Serve React frontend
+    frontend_dist = os.path.join(os.path.dirname(__file__), '..', 'frontend', 'dist')
+    
+    if path and os.path.exists(os.path.join(frontend_dist, path)):
+        return send_from_directory(frontend_dist, path)
+    else:
+        # Serve React index.html for all other routes (SPA routing)
+        return send_from_directory(frontend_dist, 'index.html')
+
+@app.route('/assets/<path:filename>')
+def serve_react_assets(filename):
+    """Serve React build assets"""
+    frontend_assets = os.path.join(os.path.dirname(__file__), '..', 'frontend', 'dist', 'assets')
+    return send_from_directory(frontend_assets, filename)
 
 if __name__ == '__main__':
     import os
