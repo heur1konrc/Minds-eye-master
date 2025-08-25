@@ -582,3 +582,45 @@ def get_current_background_api():
             'title': 'Error loading background'
         }), 500
 
+
+# React Frontend Routes
+@app.route('/assets/<path:filename>')
+def serve_react_assets(filename):
+    """Serve React build assets (CSS, JS, etc.)"""
+    frontend_assets = os.path.join(os.path.dirname(__file__), '..', 'frontend', 'dist', 'assets')
+    if os.path.exists(os.path.join(frontend_assets, filename)):
+        return send_from_directory(frontend_assets, filename)
+    return f"React asset not found: {filename}", 404
+
+@app.route('/')
+def serve_react_root():
+    """Serve React frontend for root route"""
+    frontend_dist = os.path.join(os.path.dirname(__file__), '..', 'frontend', 'dist')
+    if os.path.exists(os.path.join(frontend_dist, 'index.html')):
+        return send_from_directory(frontend_dist, 'index.html')
+    return "React frontend not found", 404
+
+@app.route('/<path:path>')
+def serve_react_app(path):
+    """Serve React frontend for all non-API routes (SPA routing)"""
+    # Skip API routes, admin routes, and static asset routes
+    if path.startswith('api/') or path.startswith('admin/') or path.startswith('static/'):
+        # Let Flask handle these routes normally
+        from flask import abort
+        abort(404)
+    
+    # Check if it's a specific file request
+    frontend_dist = os.path.join(os.path.dirname(__file__), '..', 'frontend', 'dist')
+    if '.' in path and os.path.exists(os.path.join(frontend_dist, path)):
+        return send_from_directory(frontend_dist, path)
+    
+    # For all other routes, serve React index.html (SPA routing)
+    if os.path.exists(os.path.join(frontend_dist, 'index.html')):
+        return send_from_directory(frontend_dist, 'index.html')
+    return "React frontend not found", 404
+
+if __name__ == '__main__':
+    import os
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=False)
+
