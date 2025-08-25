@@ -11,7 +11,7 @@ from ..config import PHOTOGRAPHY_ASSETS_DIR
 
 about_mgmt_bp = Blueprint('about_mgmt', __name__)
 
-# Allowed image extensions
+# Allowed image extensions for this RC
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 
 def allowed_file(filename):
