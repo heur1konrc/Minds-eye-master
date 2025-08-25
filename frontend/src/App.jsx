@@ -8,8 +8,7 @@ import SimplePortfolio from './pages/SimplePortfolio'
 import WorkingPortfolio from './pages/WorkingPortfolio'
 import SQLPortfolio from './pages/SQLPortfolio'
 import FeaturedPage from './pages/FeaturedPage'
-import AboutPage from './pages/AboutPage'
-import AboutPageFloating from './pages/AboutPageFloating'
+import BioPage from './pages/BioPage'
 import ContactPage from './pages/ContactPage'
 import CopyrightProtection from './components/CopyrightProtection'
 import './App.css'
@@ -27,8 +26,7 @@ function App() {
           <Route path="/working" element={<WorkingPortfolio />} />
           <Route path="/sql" element={<SQLPortfolio />} />
           <Route path="/featured" element={<FeaturedPage />} />
-          <Route path="/about" element={<AboutPageFloating />} />
-          <Route path="/about-old" element={<AboutPage />} />
+          <Route path="/about" element={<BioPage />} />
           <Route path="/contact" element={<ContactPage />} />
         </Routes>
       </div>
