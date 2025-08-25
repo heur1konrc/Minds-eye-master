@@ -113,12 +113,12 @@ Rick Corey`,
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.6 + index * 0.1 }}
-                    className="bg-slate-800 rounded-lg overflow-hidden shadow-lg"
+                    className="bg-slate-800 rounded-lg overflow-hidden shadow-lg aspect-[3/2]"
                   >
                     <img
                       src={`/assets/about/${image.filename}`}
                       alt={image.title}
-                      className="w-full h-96 object-cover"
+                      className="w-full h-full object-cover"
                     />
                   </motion.div>
                 ))
