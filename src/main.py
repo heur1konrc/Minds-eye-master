@@ -693,6 +693,12 @@ def about_floating():
     '''
     return html_content
 
+# DIAGNOSTIC TEST ROUTE
+@app.route('/flask-test-12345')
+def flask_diagnostic():
+    """Test if Flask is running at all"""
+    return "FLASK IS WORKING! If you see this, Flask routes work but /about is being hijacked by React routing."
+
 # SPECIAL ABOUT PAGE HANDLER - Bypasses React entirely
 @app.route('/about')
 def about_page_override():
