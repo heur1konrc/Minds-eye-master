@@ -827,6 +827,11 @@ def serve_react_root():
 @app.route('/<path:path>')
 def serve_react_app(path):
     """Serve React frontend for all non-API routes (SPA routing)"""
+    # EXPLICITLY EXCLUDE /about - Let Flask handle it
+    if path == 'about':
+        from flask import abort
+        abort(404)  # This will let Flask try other routes
+    
     # Skip API routes, admin routes, and static asset routes
     if path.startswith('api/') or path.startswith('admin/') or path.startswith('static/'):
         # Let Flask handle these routes normally
