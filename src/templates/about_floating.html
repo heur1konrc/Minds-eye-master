@@ -61,21 +61,17 @@
             <div class="prose prose-lg prose-invert max-w-none">
                 <div class="text-slate-300 leading-relaxed text-lg">
                     
-                    <!-- Floating Behind the Lens Image -->
-                    {% if about_images and about_images|length > 0 %}
+                    <!-- Floating Behind the Lens Image (Static for now) -->
                     <div class="floating-image">
                         <div class="bg-slate-800 rounded-lg overflow-hidden shadow-2xl" style="aspect-ratio: 3/2;">
-                            <img
-                                src="/assets/about/{{ about_images[0].filename }}"
-                                alt="Behind the Lens"
-                                class="w-full h-full object-cover"
-                            />
+                            <div class="w-full h-full bg-gradient-to-br from-green-600 to-green-800 flex items-center justify-center">
+                                <p class="text-white text-center">Behind the Lens Image<br/>Will appear here once uploaded</p>
+                            </div>
                         </div>
                         <p class="text-center text-orange-400 text-sm mt-3 font-light">
                             Behind the Lens
                         </p>
                     </div>
-                    {% endif %}
                     
                     <!-- Text content that wraps around the floating image -->
                     <div>
