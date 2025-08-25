@@ -584,7 +584,7 @@ def get_current_background_api():
 
 
 # Flask About Page with Floating Layout (bypassing React cache issues)
-@app.route('/about-floating')
+@app.route('/api/about-floating-page')
 def about_floating():
     """Serve Flask-based About page with floating image layout"""
     html_content = '''
