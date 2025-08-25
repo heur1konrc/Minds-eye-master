@@ -567,12 +567,6 @@ def serve_react_assets(filename):
     frontend_assets = os.path.join(os.path.dirname(__file__), '..', 'frontend', 'dist', 'assets')
     return send_from_directory(frontend_assets, filename)
 
-if __name__ == '__main__':
-    import os
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port, debug=False)
-
-
 @app.route('/api/background')
 def get_current_background_api():
     """API endpoint to get current background image - ONLY FROM DATABASE"""
@@ -612,4 +606,9 @@ def get_current_background_api():
             'filename': None,
             'title': 'Error loading background'
         }), 500
+
+if __name__ == '__main__':
+    import os
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=False)
 
